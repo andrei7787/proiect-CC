@@ -7,6 +7,7 @@
     "test": "vitest run apps/api/test"
   },
   "dependencies": {
+    "@ai-study-planner/shared": "0.1.0",
     "@aws-sdk/client-dynamodb": "^3.900.0",
     "@aws-sdk/client-s3": "^3.900.0",
     "@aws-sdk/client-secrets-manager": "^3.900.0",
