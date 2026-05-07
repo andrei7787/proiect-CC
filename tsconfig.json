@@ -1,6 +1,7 @@
 {
   "include": [],
   "references": [
+    { "path": "./apps/api" },
     { "path": "./packages/shared" }
   ]
 }
