@@ -1,0 +1,26 @@
+flowchart LR
+  Student[Student Browser] --> Amplify[AWS Amplify Hosting]
+  Amplify --> Cognito[Amazon Cognito]
+  Amplify --> ApiGateway[Amazon API Gateway]
+  ApiGateway --> Lambda[AWS Lambda API Handlers]
+  Lambda --> DynamoDB[Amazon DynamoDB]
+  Lambda --> S3[Amazon S3 Materials Bucket]
+  S3 --> SQS[Amazon SQS Material Queue]
+  SQS --> Processor[Processor Lambda]
+  Processor --> S3
+  Processor --> Secrets[AWS Secrets Manager]
+  Processor --> Gemini[Google Gemini API gemini-2.5-flash-lite]
+  Processor --> DynamoDB
+  EventBridge[Amazon EventBridge Scheduler] --> Reminder[Reminder Lambda]
+  Reminder --> DynamoDB
+  Reminder --> SES[Amazon SES]
+  GitHub[GitHub Actions] --> CDK[AWS CDK Deploy]
+  CDK --> Amplify
+  CDK --> ApiGateway
+  CDK --> Lambda
+  CDK --> DynamoDB
+  CDK --> S3
+  CDK --> SQS
+  CDK --> EventBridge
+  CDK --> SES
+  CDK --> Secrets
