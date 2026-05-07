@@ -1,0 +1,17 @@
+{
+  "name": "ai-study-planner",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*", "infra"],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "vitest run",
+    "typecheck": "tsc -b",
+    "lint": "npm run lint --workspaces --if-present",
+    "cdk:synth": "npm --workspace infra run synth"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}
