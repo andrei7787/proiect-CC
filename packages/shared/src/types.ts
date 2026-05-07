@@ -40,3 +40,13 @@ export interface StudyTask {
   status: StudyTaskStatus;
   reminderSentAt?: string;
 }
+
+export interface StudyPlan {
+  planId: string;
+  courseId: string;
+  userId: string;
+  generatedFromMaterialIds: string[];
+  startDate: string;
+  examDate: string;
+  createdAt: string;
+}
