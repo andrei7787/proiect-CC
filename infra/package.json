@@ -1,0 +1,17 @@
+{
+  "name": "@ai-study-planner/infra",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "synth": "cdk synth"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.190.0",
+    "constructs": "^10.4.0"
+  },
+  "devDependencies": {
+    "aws-cdk": "^2.190.0",
+    "ts-node": "^10.9.0"
+  }
+}
