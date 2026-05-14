@@ -7,12 +7,17 @@ describe("apiRequest", () => {
   });
 
   it("sends the provided token as a bearer authorization header", async () => {
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => (
+      new Response(JSON.stringify({ ok: true }), { status: 200 })
+    ));
     vi.stubGlobal("fetch", fetchMock);
 
     await apiRequest("/courses", { token: "id-token-1" });
 
-    const headers = fetchMock.mock.calls[0][1].headers as Headers;
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [, init] = fetchMock.mock.calls[0];
+    if (!init) throw new Error("fetch init is required");
+    const headers = init.headers as Headers;
     expect(headers.get("authorization")).toBe("Bearer id-token-1");
   });
 
