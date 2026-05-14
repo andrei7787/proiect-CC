@@ -58,4 +58,26 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Student login" })).toBeInTheDocument();
     expect(localStorage.getItem("ai-study-planner.auth")).toBeNull();
   });
+
+  it("renders courses returned by the protected API", async () => {
+    localStorage.setItem("ai-study-planner.auth", JSON.stringify({
+      idToken: "id-token-1",
+      accessToken: "access-token-1"
+    }));
+    mocks.listCourses.mockResolvedValueOnce([{
+      courseId: "course-1",
+      userId: "user-1",
+      name: "Distributed Systems",
+      examDate: "2026-06-20",
+      difficulty: "medium",
+      weeklyHoursAvailable: 6,
+      createdAt: "2026-05-14T00:00:00.000Z",
+      updatedAt: "2026-05-14T00:00:00.000Z"
+    }]);
+
+    render(<App />);
+
+    expect(await screen.findByText("Distributed Systems")).toBeInTheDocument();
+    expect(screen.getByText("Exam: 2026-06-20")).toBeInTheDocument();
+  });
 });
