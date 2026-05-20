@@ -40,6 +40,20 @@ export async function createStudyPlanWithTasks(input: {
   return { plan: input.plan, tasks: input.tasks };
 }
 
+export async function listStudyTasksForCourse(tableName: string, courseId: string, userId: string): Promise<StudyTask[]> {
+  const result = await client.send(new QueryCommand({
+    TableName: tableName,
+    IndexName: "byCourse",
+    KeyConditionExpression: "courseId = :courseId",
+    FilterExpression: "userId = :userId",
+    ExpressionAttributeValues: {
+      ":courseId": courseId,
+      ":userId": userId
+    }
+  }));
+  return (result.Items ?? []) as StudyTask[];
+}
+
 export async function getStudyTask(tableName: string, taskId: string): Promise<StudyTask | undefined> {
   const result = await client.send(new GetCommand({ TableName: tableName, Key: { taskId } }));
   return result.Item as StudyTask | undefined;

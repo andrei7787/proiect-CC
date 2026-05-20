@@ -10,6 +10,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: ["apps/api/test/**/*.test.ts", "packages/shared/test/**/*.test.ts"]
+    include: ["apps/api/test/**/*.test.ts", "packages/shared/test/**/*.test.ts", "infra/test/**/*.test.ts"]
   }
 });

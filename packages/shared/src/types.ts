@@ -50,3 +50,13 @@ export interface StudyPlan {
   examDate: string;
   createdAt: string;
 }
+
+export interface Notification {
+  notificationId: string;
+  userId: string;
+  taskId: string;
+  type: "study-task";
+  message: string;
+  status: "created" | "sent" | "failed";
+  createdAt: string;
+}

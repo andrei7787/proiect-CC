@@ -1,7 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { nanoid } from "nanoid";
-import type { StudyTask } from "@ai-study-planner/shared";
+import type { Notification, StudyTask } from "@ai-study-planner/shared";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -13,20 +13,27 @@ export interface NotificationInput {
   status: "created" | "sent" | "failed";
 }
 
-export async function listDueTasks(tableName: string, today: string): Promise<StudyTask[]> {
+export async function listDueTasks(tableName: string, today: string, userId?: string): Promise<StudyTask[]> {
+  const filterParts = ["#status = :status", "attribute_not_exists(reminderSentAt)"];
+  const expressionAttributeValues: Record<string, string> = {
+    ":today": today,
+    ":status": "todo"
+  };
+  if (userId) {
+    filterParts.push("userId = :userId");
+    expressionAttributeValues[":userId"] = userId;
+  }
+
   const result = await client.send(new QueryCommand({
     TableName: tableName,
     IndexName: "byDate",
     KeyConditionExpression: "#date = :today",
-    FilterExpression: "#status = :status AND attribute_not_exists(reminderSentAt)",
+    FilterExpression: filterParts.join(" AND "),
     ExpressionAttributeNames: {
       "#date": "date",
       "#status": "status"
     },
-    ExpressionAttributeValues: {
-      ":today": today,
-      ":status": "todo"
-    }
+    ExpressionAttributeValues: expressionAttributeValues
   }));
   return (result.Items ?? []) as StudyTask[];
 }
@@ -40,6 +47,16 @@ export async function createNotification(tableName: string, input: NotificationI
       createdAt: new Date().toISOString()
     }
   }));
+}
+
+export async function listNotificationsForUser(tableName: string, userId: string): Promise<Notification[]> {
+  const result = await client.send(new QueryCommand({
+    TableName: tableName,
+    IndexName: "byUser",
+    KeyConditionExpression: "userId = :userId",
+    ExpressionAttributeValues: { ":userId": userId }
+  }));
+  return (result.Items ?? []) as Notification[];
 }
 
 export async function markReminderSent(tableName: string, taskId: string, sentAt: string): Promise<void> {

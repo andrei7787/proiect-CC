@@ -44,10 +44,15 @@ export async function generateStudyTasks(input: {
   return normalizeGeneratedPlan(parseJson(response.text ?? "{}"));
 }
 
-function buildStudyPlanPrompt(course: Course, materials: Material[]): string {
+export function buildStudyPlanPrompt(
+  course: Course,
+  materials: Material[],
+  today = new Date().toISOString().slice(0, 10)
+): string {
   return [
     "Create a dated study plan for a university student.",
     "Return JSON only: {\"tasks\":[{\"date\":\"YYYY-MM-DD\",\"title\":\"...\",\"description\":\"...\",\"estimatedMinutes\":45}]}",
+    `Include at least one task dated ${today} so the student can start today.`,
     `Course: ${course.name}`,
     `Exam date: ${course.examDate}`,
     `Difficulty: ${course.difficulty}`,

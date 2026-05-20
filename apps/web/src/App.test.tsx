@@ -5,18 +5,53 @@ import { App } from "./App";
 
 const mocks = vi.hoisted(() => ({
   loginWithCognito: vi.fn(),
-  listCourses: vi.fn()
+  getDashboard: vi.fn(),
+  listCourses: vi.fn(),
+  createMaterialUpload: vi.fn(),
+  uploadFileToUrl: vi.fn(),
+  queueMaterialProcessing: vi.fn(),
+  listCourseMaterials: vi.fn(),
+  generateStudyPlan: vi.fn(),
+  listCourseTasks: vi.fn(),
+  updateStudyTaskStatus: vi.fn()
 }));
 
 vi.mock("./auth/cognito", () => ({ loginWithCognito: mocks.loginWithCognito }));
-vi.mock("./api/client", () => ({ listCourses: mocks.listCourses }));
+vi.mock("./api/client", () => ({
+  getDashboard: mocks.getDashboard,
+  listCourses: mocks.listCourses,
+  createMaterialUpload: mocks.createMaterialUpload,
+  uploadFileToUrl: mocks.uploadFileToUrl,
+  queueMaterialProcessing: mocks.queueMaterialProcessing,
+  listCourseMaterials: mocks.listCourseMaterials,
+  generateStudyPlan: mocks.generateStudyPlan,
+  listCourseTasks: mocks.listCourseTasks,
+  updateStudyTaskStatus: mocks.updateStudyTaskStatus
+}));
 
 describe("App", () => {
   beforeEach(() => {
     localStorage.clear();
     mocks.loginWithCognito.mockReset();
+    mocks.getDashboard.mockReset();
+    mocks.getDashboard.mockResolvedValue({
+      courses: [],
+      todayTasks: [],
+      deadlines: [],
+      summaries: [],
+      notifications: []
+    });
     mocks.listCourses.mockReset();
     mocks.listCourses.mockResolvedValue([]);
+    mocks.createMaterialUpload.mockReset();
+    mocks.uploadFileToUrl.mockReset();
+    mocks.queueMaterialProcessing.mockReset();
+    mocks.listCourseMaterials.mockReset();
+    mocks.listCourseMaterials.mockResolvedValue([]);
+    mocks.generateStudyPlan.mockReset();
+    mocks.listCourseTasks.mockReset();
+    mocks.listCourseTasks.mockResolvedValue([]);
+    mocks.updateStudyTaskStatus.mockReset();
   });
 
   afterEach(() => {
@@ -59,7 +94,63 @@ describe("App", () => {
     expect(localStorage.getItem("ai-study-planner.auth")).toBeNull();
   });
 
-  it("renders courses returned by the protected API", async () => {
+  it("renders dashboard data returned by the protected API", async () => {
+    localStorage.setItem("ai-study-planner.auth", JSON.stringify({
+      idToken: "id-token-1",
+      accessToken: "access-token-1"
+    }));
+    mocks.getDashboard.mockResolvedValueOnce({
+      courses: [{
+        courseId: "course-1",
+        userId: "user-1",
+        name: "Distributed Systems",
+        examDate: "2026-06-20",
+        difficulty: "medium",
+        weeklyHoursAvailable: 6,
+        createdAt: "2026-05-14T00:00:00.000Z",
+        updatedAt: "2026-05-14T00:00:00.000Z"
+      }],
+      todayTasks: [{
+        taskId: "task-1",
+        planId: "plan-1",
+        courseId: "course-1",
+        userId: "user-1",
+        date: "2026-05-20",
+        title: "Review SQS",
+        description: "Review queue basics.",
+        estimatedMinutes: 30,
+        status: "todo"
+      }],
+      deadlines: [{ courseId: "course-1", courseName: "Distributed Systems", examDate: "2026-06-20" }],
+      summaries: [{
+        materialId: "mat-1",
+        courseId: "course-1",
+        fileName: "serverless.pdf",
+        summary: "Queues decouple producers from processors.",
+        keyConcepts: ["SQS"],
+        processedAt: "2026-05-20T10:01:00.000Z"
+      }],
+      notifications: [{
+        notificationId: "notification-1",
+        userId: "user-1",
+        taskId: "task-1",
+        type: "study-task",
+        message: "Reminder: Review SQS is due today",
+        status: "created",
+        createdAt: "2026-05-20T11:00:00.000Z"
+      }]
+    });
+
+    render(<App />);
+
+    expect(await screen.findAllByText("Distributed Systems")).toHaveLength(2);
+    expect(screen.getAllByText("Exam: 2026-06-20")).toHaveLength(2);
+    expect(screen.getByText("Review SQS")).toBeInTheDocument();
+    expect(screen.getByText("Queues decouple producers from processors.")).toBeInTheDocument();
+    expect(screen.getByText("Reminder: Review SQS is due today")).toBeInTheDocument();
+  });
+
+  it("uploads a material for the first course and queues processing", async () => {
     localStorage.setItem("ai-study-planner.auth", JSON.stringify({
       idToken: "id-token-1",
       accessToken: "access-token-1"
@@ -67,17 +158,131 @@ describe("App", () => {
     mocks.listCourses.mockResolvedValueOnce([{
       courseId: "course-1",
       userId: "user-1",
-      name: "Distributed Systems",
-      examDate: "2026-06-20",
-      difficulty: "medium",
-      weeklyHoursAvailable: 6,
+      name: "Cloud Computing",
+      examDate: "2026-06-10",
+      difficulty: "hard",
+      weeklyHoursAvailable: 8,
       createdAt: "2026-05-14T00:00:00.000Z",
       updatedAt: "2026-05-14T00:00:00.000Z"
     }]);
+    mocks.createMaterialUpload.mockResolvedValueOnce({
+      material: {
+        materialId: "mat-1",
+        courseId: "course-1",
+        userId: "user-1",
+        fileName: "serverless.pdf",
+        s3Key: "user-1/course-1/mat-1-serverless.pdf",
+        contentType: "application/pdf",
+        status: "uploaded",
+        createdAt: "2026-05-20T10:00:00.000Z"
+      },
+      uploadUrl: "https://upload.example/mat-1"
+    });
+    mocks.listCourseMaterials.mockResolvedValueOnce([]).mockResolvedValueOnce([{
+      materialId: "mat-1",
+      courseId: "course-1",
+      userId: "user-1",
+      fileName: "serverless.pdf",
+      s3Key: "user-1/course-1/mat-1-serverless.pdf",
+      contentType: "application/pdf",
+      status: "processing",
+      createdAt: "2026-05-20T10:00:00.000Z"
+    }]);
 
     render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "Course" }));
 
-    expect(await screen.findByText("Distributed Systems")).toBeInTheDocument();
-    expect(screen.getByText("Exam: 2026-06-20")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Cloud Computing" })).toBeInTheDocument();
+    const file = new File(["pdf"], "serverless.pdf", { type: "application/pdf" });
+    fireEvent.change(screen.getByLabelText("Material file"), { target: { files: [file] } });
+    fireEvent.click(screen.getByRole("button", { name: "Upload and process" }));
+
+    expect(await screen.findByText("serverless.pdf")).toBeInTheDocument();
+    expect(screen.getByText("processing")).toBeInTheDocument();
+    expect(mocks.createMaterialUpload).toHaveBeenCalledWith("id-token-1", {
+      courseId: "course-1",
+      fileName: "serverless.pdf",
+      contentType: "application/pdf"
+    });
+    expect(mocks.uploadFileToUrl).toHaveBeenCalledWith("https://upload.example/mat-1", file);
+    expect(mocks.queueMaterialProcessing).toHaveBeenCalledWith("id-token-1", "mat-1");
+    expect(mocks.listCourseMaterials).toHaveBeenCalledWith("id-token-1", "course-1");
+  });
+
+  it("generates a study plan, renders tasks, and updates task status", async () => {
+    localStorage.setItem("ai-study-planner.auth", JSON.stringify({
+      idToken: "id-token-1",
+      accessToken: "access-token-1"
+    }));
+    mocks.listCourses.mockResolvedValueOnce([{
+      courseId: "course-1",
+      userId: "user-1",
+      name: "Cloud Computing",
+      examDate: "2026-06-10",
+      difficulty: "hard",
+      weeklyHoursAvailable: 8,
+      createdAt: "2026-05-14T00:00:00.000Z",
+      updatedAt: "2026-05-14T00:00:00.000Z"
+    }]);
+    mocks.listCourseMaterials.mockResolvedValueOnce([{
+      materialId: "mat-1",
+      courseId: "course-1",
+      userId: "user-1",
+      fileName: "serverless.pdf",
+      s3Key: "user-1/course-1/mat-1-serverless.pdf",
+      contentType: "application/pdf",
+      status: "ready",
+      summary: "Queues decouple producers from processors.",
+      keyConcepts: ["SQS"],
+      createdAt: "2026-05-20T10:00:00.000Z",
+      processedAt: "2026-05-20T10:01:00.000Z"
+    }]);
+    mocks.generateStudyPlan.mockResolvedValueOnce({
+      plan: {
+        planId: "plan-1",
+        courseId: "course-1",
+        userId: "user-1",
+        generatedFromMaterialIds: ["mat-1"],
+        startDate: "2026-05-20",
+        examDate: "2026-06-10",
+        createdAt: "2026-05-20T10:00:00.000Z"
+      },
+      tasks: [{
+        taskId: "task-1",
+        planId: "plan-1",
+        courseId: "course-1",
+        userId: "user-1",
+        date: "2026-05-20",
+        title: "Review SQS",
+        description: "Review queue basics.",
+        estimatedMinutes: 30,
+        status: "todo"
+      }]
+    });
+    mocks.listCourseTasks.mockResolvedValueOnce([]).mockResolvedValueOnce([{
+      taskId: "task-1",
+      planId: "plan-1",
+      courseId: "course-1",
+      userId: "user-1",
+      date: "2026-05-20",
+      title: "Review SQS",
+      description: "Review queue basics.",
+      estimatedMinutes: 30,
+      status: "todo"
+    }]);
+    mocks.updateStudyTaskStatus.mockResolvedValueOnce({ taskId: "task-1", status: "done" });
+
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "Course" }));
+
+    expect(await screen.findByText("Queues decouple producers from processors.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Generate Study Plan" }));
+
+    expect(await screen.findByText("Review SQS")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Review SQS status"), { target: { value: "done" } });
+
+    expect(mocks.generateStudyPlan).toHaveBeenCalledWith("id-token-1", "course-1");
+    expect(mocks.listCourseTasks).toHaveBeenCalledWith("id-token-1", "course-1");
+    expect(mocks.updateStudyTaskStatus).toHaveBeenCalledWith("id-token-1", "task-1", "done");
   });
 });

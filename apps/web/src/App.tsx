@@ -60,7 +60,7 @@ export function App() {
       </aside>
       <section className="content">
         {view === "dashboard" && <Dashboard token={session.idToken} />}
-        {view === "course" && <CourseDetail />}
+        {view === "course" && <CourseDetail token={session.idToken} />}
       </section>
     </main>
   );
