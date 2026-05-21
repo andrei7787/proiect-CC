@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   apiRequest,
+  createCourse,
   createMaterialUpload,
   generateStudyPlan,
   getDashboard,
@@ -241,6 +242,30 @@ describe("apiRequest", () => {
       method: "PATCH",
       body: JSON.stringify({ status: "done" })
     }));
+  });
+
+  it("creates a course", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({
+      courseId: "course-1",
+      userId: "user-1",
+      name: "Cloud Computing",
+      examDate: "2026-06-10",
+      difficulty: "medium",
+      weeklyHoursAvailable: 10,
+      createdAt: "2026-05-21T00:00:00.000Z",
+      updatedAt: "2026-05-21T00:00:00.000Z"
+    }), { status: 201 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const course = await createCourse("id-token-1", {
+      name: "Cloud Computing",
+      examDate: "2026-06-10",
+      difficulty: "medium",
+      weeklyHoursAvailable: 10
+    });
+
+    expect(course.name).toBe("Cloud Computing");
+    expect(fetchMock).toHaveBeenCalledWith("/courses", expect.objectContaining({ method: "POST" }));
   });
 
   it("triggers reminders for the authenticated user", async () => {

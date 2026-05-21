@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { loginWithCognito } from "./auth/cognito";
+import { confirmRegistration, loginWithCognito, registerWithCognito } from "./auth/cognito";
 import {
   clearStoredSession,
   loadStoredSession,
   saveStoredSession,
   type AuthSession
 } from "./auth/session";
+import { createCourse } from "./api/client";
+import { CourseCreate } from "./pages/CourseCreate";
 import { CourseDetail } from "./pages/CourseDetail";
 import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
 
-type View = "dashboard" | "course";
+type View = "dashboard" | "course" | "course-create";
 
 export function App() {
   const [session, setSession] = useState<AuthSession | null>(() => loadStoredSession());
@@ -33,6 +35,26 @@ export function App() {
     }
   }
 
+  async function handleRegister(email: string, password: string): Promise<string | undefined> {
+    const result = await registerWithCognito(email, password);
+    return result.destination;
+  }
+
+  async function handleConfirm(email: string, code: string) {
+    await confirmRegistration(email, code);
+  }
+
+  async function handleCreateCourse(input: {
+    name: string;
+    examDate: string;
+    difficulty: string;
+    weeklyHoursAvailable: number;
+  }) {
+    if (!session) return;
+    await createCourse(session.idToken, input);
+    setView("course");
+  }
+
   function handleLogout() {
     clearStoredSession();
     setSession(null);
@@ -48,7 +70,13 @@ export function App() {
           </div>
         </aside>
         <section className="content login-wrapper">
-          <Login error={loginError} isSubmitting={isLoggingIn} onLogin={handleLogin} />
+          <Login
+            error={loginError}
+            isSubmitting={isLoggingIn}
+            onLogin={handleLogin}
+            onRegister={handleRegister}
+            onConfirm={handleConfirm}
+          />
         </section>
       </main>
     );
@@ -62,16 +90,40 @@ export function App() {
           <span>AI-Powered</span>
         </div>
         <nav aria-label="Primary">
-          <button type="button" className={view === "dashboard" ? "nav-active" : ""} onClick={() => setView("dashboard")}>Dashboard</button>
-          <button type="button" className={view === "course" ? "nav-active" : ""} onClick={() => setView("course")}>Course</button>
+          <button
+            type="button"
+            className={view === "dashboard" ? "nav-active" : ""}
+            onClick={() => setView("dashboard")}
+          >
+            Dashboard
+          </button>
+          <button
+            type="button"
+            className={view === "course" || view === "course-create" ? "nav-active" : ""}
+            onClick={() => setView("course")}
+          >
+            Course
+          </button>
         </nav>
         <div className="sidebar-footer">
           <button type="button" onClick={handleLogout}>Logout</button>
         </div>
       </aside>
       <section className="content">
-        {view === "dashboard" && <Dashboard token={session.idToken} />}
+        {view === "dashboard" && (
+          <Dashboard
+            token={session.idToken}
+            onCreateCourse={() => setView("course-create")}
+          />
+        )}
         {view === "course" && <CourseDetail token={session.idToken} />}
+        {view === "course-create" && (
+          <CourseCreate
+            token={session.idToken}
+            onCreate={handleCreateCourse}
+            onCancel={() => setView("dashboard")}
+          />
+        )}
       </section>
     </main>
   );

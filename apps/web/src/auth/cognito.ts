@@ -1,7 +1,9 @@
 import {
   AuthFlowType,
   CognitoIdentityProviderClient,
-  InitiateAuthCommand
+  ConfirmSignUpCommand,
+  InitiateAuthCommand,
+  SignUpCommand
 } from "@aws-sdk/client-cognito-identity-provider";
 import type { AuthSession } from "./session";
 
@@ -11,6 +13,39 @@ function requiredEnv(name: string): string {
     throw new Error(`${name} is required.`);
   }
   return value;
+}
+
+export async function registerWithCognito(
+  email: string,
+  password: string
+): Promise<{ userId: string; destination: string }> {
+  const client = new CognitoIdentityProviderClient({
+    region: requiredEnv("VITE_AWS_REGION")
+  });
+
+  const result = await client.send(new SignUpCommand({
+    ClientId: requiredEnv("VITE_COGNITO_USER_POOL_CLIENT_ID"),
+    Username: email,
+    Password: password,
+    UserAttributes: [{ Name: "email", Value: email }]
+  }));
+
+  return {
+    userId: result.UserSub ?? "",
+    destination: result.CodeDeliveryDetails?.Destination ?? email
+  };
+}
+
+export async function confirmRegistration(email: string, code: string): Promise<void> {
+  const client = new CognitoIdentityProviderClient({
+    region: requiredEnv("VITE_AWS_REGION")
+  });
+
+  await client.send(new ConfirmSignUpCommand({
+    ClientId: requiredEnv("VITE_COGNITO_USER_POOL_CLIENT_ID"),
+    Username: email,
+    ConfirmationCode: code
+  }));
 }
 
 export async function loginWithCognito(email: string, password: string): Promise<AuthSession> {

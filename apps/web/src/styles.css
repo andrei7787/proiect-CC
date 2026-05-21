@@ -553,6 +553,331 @@ dd {
   from { opacity: 0; transform: translateX(-12px); }
 }
 
+/* Link buttons
+   ─────────────────────────────────────── */
+
+.link-btn {
+  background: none !important;
+  border: none !important;
+  color: var(--text-faint) !important;
+  padding: 6px 0 !important;
+  font-size: 13px !important;
+  cursor: pointer;
+  transition: color var(--ease);
+  width: 100%;
+  text-align: center;
+  margin-top: 4px !important;
+}
+
+.link-btn:hover {
+  color: var(--accent-glow) !important;
+}
+
+.login-hint {
+  color: var(--text-faint);
+  font-size: 13.5px;
+  margin: -8px 0 14px !important;
+}
+
+.login-hint strong {
+  color: var(--text-dim);
+}
+
+/* Dashboard hero
+   ─────────────────────────────────────── */
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.dashboard-hero h1 {
+  margin: 0;
+  font-size: 26px;
+  color: var(--text);
+}
+
+.dashboard-hero p {
+  margin: 4px 0 0;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.hero-cta {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: var(--radius) !important;
+  padding: 10px 18px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--ease) !important;
+  margin-top: 0 !important;
+}
+
+.hero-cta:hover {
+  background: var(--accent-soft) !important;
+  box-shadow: 0 4px 20px rgba(115, 138, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Loading
+   ─────────────────────────────────────── */
+
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 14px;
+  color: var(--text-faint);
+}
+
+.loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Stats row
+   ─────────────────────────────────────── */
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color var(--ease);
+  position: relative;
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(115, 138, 255, 0.03) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.stat-card:hover {
+  border-color: var(--border-bright);
+}
+
+.stat-icon {
+  font-size: 20px;
+}
+
+.stat-value {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-faint);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Empty states
+   ─────────────────────────────────────── */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 16px 18px;
+  gap: 4px;
+}
+
+.empty-icon {
+  font-size: 32px;
+  margin-bottom: 6px;
+  opacity: 0.6;
+}
+
+.empty-state p {
+  color: var(--text-dim);
+  font-weight: 500;
+  margin: 0 !important;
+}
+
+.empty-state small {
+  color: var(--text-faint);
+  font-size: 12.5px;
+  max-width: 220px;
+}
+
+/* Progress bar
+   ─────────────────────────────────────── */
+
+.progress-bar {
+  height: 4px;
+  background: var(--bg-hover);
+  border-radius: 2px;
+  margin: 4px 0 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 400ms var(--ease);
+}
+
+.progress-text {
+  font-size: 12px !important;
+  color: var(--text-faint) !important;
+  margin: 0 0 8px !important;
+}
+
+/* Item typography
+   ─────────────────────────────────────── */
+
+.item-title {
+  display: block;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.item-meta {
+  color: var(--text-faint);
+  font-size: 12.5px;
+}
+
+.task-done {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+/* Course create
+   ─────────────────────────────────────── */
+
+.course-create-wrapper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 32px;
+  min-height: 60vh;
+}
+
+.course-create-panel {
+  width: 480px;
+  padding: 28px;
+}
+
+.course-create-panel h2 {
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.course-create-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+
+.course-create-panel input[type="text"],
+.course-create-panel input[type="date"],
+.course-create-panel select {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  color: var(--text);
+  font-size: 14px;
+  transition: border-color var(--ease), box-shadow var(--ease);
+}
+
+.course-create-panel input:focus,
+.course-create-panel select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 140px;
+  gap: 12px;
+}
+
+.hours-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hours-input input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  height: 4px;
+}
+
+.hours-value {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent-glow);
+  min-width: 36px;
+  text-align: right;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.form-actions button[type="submit"] {
+  flex: 1;
+  margin-top: 0 !important;
+}
+
+.form-actions .link-btn {
+  width: auto !important;
+  flex: 0;
+}
+
 /* Scrollbar
    ─────────────────────────────────────── */
 

@@ -162,6 +162,17 @@ export async function updateStudyTaskStatus(
   });
 }
 
+export async function createCourse(
+  token: string,
+  input: { name: string; examDate: string; difficulty: string; weeklyHoursAvailable: number }
+): Promise<Course> {
+  return apiRequest<Course>("/courses", {
+    method: "POST",
+    token,
+    body: JSON.stringify(input)
+  });
+}
+
 export async function runReminders(token: string): Promise<{ sent: number }> {
   return apiRequest<{ sent: number }>("/reminders/run", {
     method: "POST",

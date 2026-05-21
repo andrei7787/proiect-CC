@@ -5,6 +5,9 @@ import { App } from "./App";
 
 const mocks = vi.hoisted(() => ({
   loginWithCognito: vi.fn(),
+  registerWithCognito: vi.fn(),
+  confirmRegistration: vi.fn(),
+  createCourse: vi.fn(),
   getDashboard: vi.fn(),
   listCourses: vi.fn(),
   createMaterialUpload: vi.fn(),
@@ -17,8 +20,13 @@ const mocks = vi.hoisted(() => ({
   runReminders: vi.fn()
 }));
 
-vi.mock("./auth/cognito", () => ({ loginWithCognito: mocks.loginWithCognito }));
+vi.mock("./auth/cognito", () => ({
+  loginWithCognito: mocks.loginWithCognito,
+  registerWithCognito: mocks.registerWithCognito,
+  confirmRegistration: mocks.confirmRegistration
+}));
 vi.mock("./api/client", () => ({
+  createCourse: mocks.createCourse,
   getDashboard: mocks.getDashboard,
   listCourses: mocks.listCourses,
   createMaterialUpload: mocks.createMaterialUpload,
@@ -35,6 +43,9 @@ describe("App", () => {
   beforeEach(() => {
     localStorage.clear();
     mocks.loginWithCognito.mockReset();
+    mocks.registerWithCognito.mockReset();
+    mocks.confirmRegistration.mockReset();
+    mocks.createCourse.mockReset();
     mocks.getDashboard.mockReset();
     mocks.getDashboard.mockResolvedValue({
       courses: [],
@@ -65,7 +76,7 @@ describe("App", () => {
   it("shows login before a session exists", () => {
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: "Student login" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Welcome back" })).toBeInTheDocument();
     expect(screen.queryByText("Today's tasks")).not.toBeInTheDocument();
   });
 
@@ -85,6 +96,30 @@ describe("App", () => {
     expect(localStorage.getItem("ai-study-planner.auth")).toContain("id-token-1");
   });
 
+  it("shows registration form when clicking create account", async () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "New student? Create an account" }));
+
+    expect(screen.getByRole("heading", { name: "Create account" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("student@example.com")).toBeInTheDocument();
+  });
+
+  it("registers and shows confirmation step", async () => {
+    mocks.registerWithCognito.mockResolvedValueOnce({
+      userId: "user-1",
+      destination: "s***@e***"
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "New student? Create an account" }));
+    fireEvent.change(screen.getByPlaceholderText("student@example.com"), { target: { value: "new@test.com" } });
+    fireEvent.change(screen.getByPlaceholderText("At least 8 characters"), { target: { value: "Password123!" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+
+    expect(await screen.findByText(/s\*\*\*@e\*\*\*/)).toBeInTheDocument();
+    expect(mocks.registerWithCognito).toHaveBeenCalledWith("new@test.com", "Password123!");
+  });
+
   it("logs out and clears the authenticated view", async () => {
     localStorage.setItem("ai-study-planner.auth", JSON.stringify({
       idToken: "id-token-1",
@@ -94,7 +129,7 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "Logout" }));
 
-    expect(screen.getByRole("heading", { name: "Student login" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Welcome back" })).toBeInTheDocument();
     expect(localStorage.getItem("ai-study-planner.auth")).toBeNull();
   });
 
@@ -150,8 +185,44 @@ describe("App", () => {
     expect(await screen.findAllByText("Distributed Systems")).toHaveLength(2);
     expect(screen.getAllByText("Exam: 2026-06-20")).toHaveLength(2);
     expect(screen.getByText("Review SQS")).toBeInTheDocument();
-    expect(screen.getByText("Queues decouple producers from processors.")).toBeInTheDocument();
+    expect(screen.getByText(/Queues decouple producers/)).toBeInTheDocument();
     expect(screen.getByText("Reminder: Review SQS is due today")).toBeInTheDocument();
+  });
+
+  it("creates a course and navigates to course view", async () => {
+    localStorage.setItem("ai-study-planner.auth", JSON.stringify({
+      idToken: "id-token-1",
+      accessToken: "access-token-1"
+    }));
+    mocks.getDashboard.mockResolvedValueOnce({
+      courses: [],
+      todayTasks: [],
+      deadlines: [],
+      summaries: [],
+      notifications: []
+    });
+    mocks.createCourse.mockResolvedValueOnce({
+      courseId: "course-new",
+      userId: "user-1",
+      name: "Cloud Computing",
+      examDate: "2026-06-10",
+      difficulty: "medium",
+      weeklyHoursAvailable: 10,
+      createdAt: "2026-05-21T00:00:00.000Z",
+      updatedAt: "2026-05-21T00:00:00.000Z"
+    });
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "+ New Course" }));
+
+    fireEvent.change(screen.getByPlaceholderText("e.g. Cloud Computing"), { target: { value: "Cloud Computing" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create course" }));
+
+    expect(mocks.createCourse).toHaveBeenCalledWith("id-token-1", expect.objectContaining({
+      name: "Cloud Computing",
+      difficulty: "medium",
+      weeklyHoursAvailable: 10
+    }));
   });
 
   it("uploads a material for the first course and queues processing", async () => {
