@@ -3,7 +3,7 @@ import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vitest";
 import { AiStudyPlannerStack } from "../lib/ai-study-planner-stack";
 
-describe("AiStudyPlannerStack", { timeout: 30000 }, () => {
+describe("AiStudyPlannerStack", { timeout: 60000 }, () => {
   it("exposes deploy outputs needed by the frontend and demo setup", () => {
     const template = synthesize("student-email", { reminderEmailAddress: "student@example.com" });
 

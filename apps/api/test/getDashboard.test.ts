@@ -69,7 +69,8 @@ describe("getDashboard handler", () => {
     process.env.TASKS_TABLE = "StudyTasks";
     process.env.NOTIFICATIONS_TABLE = "Notifications";
 
-    const response = await handler(event, "2026-05-20");
+    const today = new Date().toISOString().slice(0, 10);
+    const response = await handler(event);
 
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body)).toEqual({
@@ -119,7 +120,7 @@ describe("getDashboard handler", () => {
     });
     expect(listCoursesByUser).toHaveBeenCalledWith("Courses", "user-1");
     expect(listMaterialsForUser).toHaveBeenCalledWith("Materials", "user-1");
-    expect(listDueTasks).toHaveBeenCalledWith("StudyTasks", "2026-05-20", "user-1");
+    expect(listDueTasks).toHaveBeenCalledWith("StudyTasks", today, "user-1");
     expect(listNotificationsForUser).toHaveBeenCalledWith("Notifications", "user-1");
   });
 });
