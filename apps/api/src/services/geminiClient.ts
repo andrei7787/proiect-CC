@@ -16,37 +16,32 @@ export async function analyzeStudyMaterial(input: {
     "Analyze this study material for a university student.",
     "Return JSON only with summary, keyConcepts, and recommendedFocusAreas.",
     `File name: ${input.fileName}`
+  ].join("\n");
+
+  const isPdf = input.contentType === "application/pdf";
+
+  const parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [
+    { text: promptText },
   ];
 
-  const isText = input.contentType === "text/plain" || input.contentType === "text/markdown";
-  const isPdf = input.contentType === "application/pdf";
-  let materialContent = "";
-
-  if (isText) {
-    materialContent = new TextDecoder().decode(input.fileBytes);
-  } else if (isPdf) {
-    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-    const doc = await pdfjsLib.getDocument(input.fileBytes).promise;
-    const pages: string[] = [];
-    for (let i = 1; i <= doc.numPages; i++) {
-      const page = await doc.getPage(i);
-      const content = await page.getTextContent();
-      pages.push(content.items.filter((item) => "str" in item).map((item) => (item as { str: string }).str).join(" "));
-    }
-    materialContent = pages.join("\n");
+  if (isPdf) {
+    // Send PDF directly to Gemini (native PDF support)
+    parts.push({
+      inlineData: {
+        mimeType: "application/pdf",
+        data: Buffer.from(input.fileBytes).toString("base64"),
+      },
+    });
   } else {
-    materialContent = new TextDecoder().decode(input.fileBytes);
+    // Extract text for TXT/MD files
+    const materialContent = new TextDecoder().decode(input.fileBytes);
+    if (!materialContent.trim()) throw new Error("could not extract text from material");
+    parts.push({ text: `Material content:\n${materialContent}` });
   }
-
-  if (!materialContent.trim()) throw new Error("could not extract text from material");
-
-  const parts = [{
-    text: promptText.join("\n") + "\n\nMaterial content:\n" + materialContent
-  }];
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-lite",
-    contents: [{ role: "user", parts }]
+    contents: [{ role: "user", parts }],
   });
   return parseGeminiJson(response.text ?? "{}");
 }

@@ -16,8 +16,7 @@
     "@aws-sdk/lib-dynamodb": "^3.900.0",
     "@aws-sdk/s3-request-presigner": "^3.900.0",
     "@google/genai": "^1.0.0",
-    "nanoid": "^5.0.0",
-    "pdfjs-dist": "^4.10.38"
+    "nanoid": "^5.0.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.150",
