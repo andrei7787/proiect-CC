@@ -51,24 +51,15 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 				setCourses(nextCourses);
 				const firstCourse = nextCourses[0];
 				if (firstCourse) {
-					void refreshMaterials(
-						token,
-						firstCourse.courseId,
-						isCurrent,
-						setMaterials,
-					);
+					void refreshMaterials(token, firstCourse.courseId, isCurrent, setMaterials);
 					void refreshTasks(token, firstCourse.courseId, isCurrent, setTasks);
 				}
 			})
 			.catch((err: unknown) => {
 				if (isCurrent)
-					setError(
-						`Could not load course: ${err instanceof Error ? err.message : String(err)}`,
-					);
+					setError(`Could not load course: ${err instanceof Error ? err.message : String(err)}`);
 			});
-		return () => {
-			isCurrent = false;
-		};
+		return () => { isCurrent = false; };
 	}, [token]);
 
 	async function handleUpload() {
@@ -80,8 +71,7 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 			const upload = await createMaterialUpload(token, {
 				courseId: course.courseId,
 				fileName: selectedFile.name,
-				contentType:
-					selectedFile.type || contentTypeFromName(selectedFile.name),
+				contentType: selectedFile.type || contentTypeFromName(selectedFile.name),
 			});
 			await uploadFileToUrl(upload.uploadUrl, selectedFile);
 			await queueMaterialProcessing(token, upload.material.materialId);
@@ -89,13 +79,25 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 			setMaterials(nextMaterials);
 			setStatus("Material queued for processing.");
 		} catch (err) {
-			setError(
-				`Could not upload material: ${err instanceof Error ? err.message : String(err)}`,
-			);
+			setError(`Could not upload material: ${err instanceof Error ? err.message : String(err)}`);
 			setStatus("Upload failed");
 		} finally {
 			setIsUploading(false);
 		}
+	}
+
+	function handleProcessMaterial(materialId: string) {
+		setError("");
+		queueMaterialProcessing(token, materialId)
+			.then(() => {
+				setMaterials((prev) =>
+					prev.map((m) => (m.materialId === materialId ? { ...m, status: "processing" as const } : m)),
+				);
+				setStatus("Processing queued — refresh to check status.");
+			})
+			.catch((err: unknown) =>
+				setError(`Process failed: ${err instanceof Error ? err.message : String(err)}`),
+			);
 	}
 
 	async function handleGenerateStudyPlan() {
@@ -112,15 +114,10 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 		}
 	}
 
-	async function handleTaskStatusChange(
-		taskId: string,
-		status: StudyTaskStatus,
-	) {
+	async function handleTaskStatusChange(taskId: string, status: StudyTaskStatus) {
 		await updateStudyTaskStatus(token, taskId, status);
 		setTasks((currentTasks) =>
-			currentTasks.map((task) =>
-				task.taskId === taskId ? { ...task, status } : task,
-			),
+			currentTasks.map((task) => (task.taskId === taskId ? { ...task, status } : task)),
 		);
 	}
 
@@ -148,9 +145,7 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 						<div className="empty-state">
 							<p>No courses yet.</p>
 							{onCreateCourse ? (
-								<button type="button" onClick={onCreateCourse}>
-									Create New Course
-								</button>
+								<button type="button" onClick={onCreateCourse}>Create New Course</button>
 							) : null}
 						</div>
 					)}
@@ -164,18 +159,9 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 			<section className="panel wide">
 				<h2>{course.name}</h2>
 				<dl>
-					<div>
-						<dt>Exam date</dt>
-						<dd>{course.examDate}</dd>
-					</div>
-					<div>
-						<dt>Difficulty</dt>
-						<dd>{course.difficulty}</dd>
-					</div>
-					<div>
-						<dt>Weekly hours</dt>
-						<dd>{course.weeklyHoursAvailable}</dd>
-					</div>
+					<div><dt>Exam date</dt><dd>{course.examDate}</dd></div>
+					<div><dt>Difficulty</dt><dd>{course.difficulty}</dd></div>
+					<div><dt>Weekly hours</dt><dd>{course.weeklyHoursAvailable}</dd></div>
 				</dl>
 			</section>
 
@@ -188,16 +174,10 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 					onChange={(event) => {
 						const file = event.target.files?.[0] ?? null;
 						setSelectedFile(file);
-						setStatus(
-							file ? `${file.name} ready to upload` : "PDF, TXT, or MD",
-						);
+						setStatus(file ? `${file.name} ready to upload` : "PDF, TXT, or MD");
 					}}
 				/>
-				<button
-					type="button"
-					disabled={!selectedFile || isUploading}
-					onClick={handleUpload}
-				>
+				<button type="button" disabled={!selectedFile || isUploading} onClick={handleUpload}>
 					{isUploading ? "Uploading..." : "Upload and process"}
 				</button>
 				<p>{status}</p>
@@ -207,9 +187,12 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 						{materials.map((material) => (
 							<li key={material.materialId}>
 								<span>{material.fileName}</span>
-								<span className={`status-badge status-${material.status}`}>
-									{material.status}
-								</span>
+								<span className={`status-badge status-${material.status}`}>{material.status}</span>
+								{(material.status === "uploaded" || material.status === "failed") ? (
+									<button type="button" className="btn-process" onClick={() => handleProcessMaterial(material.materialId)}>
+										Process
+									</button>
+								) : null}
 								<button
 									type="button"
 									className="btn-icon"
@@ -227,10 +210,7 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 
 			<section className="panel">
 				<h2>AI summary</h2>
-				<p>
-					{readyMaterial?.summary ??
-						"Upload a material and wait for processing to finish."}
-				</p>
+				<p>{readyMaterial?.summary ?? "Upload a material and wait for processing to finish."}</p>
 				<h3>Key concepts</h3>
 				{readyMaterial?.keyConcepts?.length ? (
 					<ul>
@@ -241,11 +221,7 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 				) : (
 					<p>No concepts yet.</p>
 				)}
-				<button
-					type="button"
-					disabled={!readyMaterial || isGenerating}
-					onClick={handleGenerateStudyPlan}
-				>
+				<button type="button" disabled={!readyMaterial || isGenerating} onClick={handleGenerateStudyPlan}>
 					{isGenerating ? "Generating..." : "Generate Study Plan"}
 				</button>
 			</section>
@@ -259,18 +235,13 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 								<div>
 									<strong>{task.title}</strong>
 									<p>{task.description}</p>
-									<small>
-										{task.date} - {task.estimatedMinutes} min
-									</small>
+									<small>{task.date} - {task.estimatedMinutes} min</small>
 								</div>
 								<select
 									aria-label={`${task.title} status`}
 									value={task.status}
 									onChange={(event) => {
-										void handleTaskStatusChange(
-											task.taskId,
-											event.target.value as StudyTaskStatus,
-										);
+										void handleTaskStatusChange(task.taskId, event.target.value as StudyTaskStatus);
 									}}
 								>
 									<option value="todo">Todo</option>
@@ -283,25 +254,17 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 				) : (
 					<p>Generate a study plan after at least one material is ready.</p>
 				)}
-				<button
-					type="button"
-					disabled={isSendingReminders}
-					onClick={handleSendReminders}
-				>
+				<button type="button" disabled={isSendingReminders} onClick={handleSendReminders}>
 					{isSendingReminders ? "Sending..." : "Send Reminders"}
 				</button>
-				{reminderResult ? (
-					<p className="reminder-ok">{reminderResult}</p>
-				) : null}
+				{reminderResult ? <p className="reminder-ok">{reminderResult}</p> : null}
 			</section>
 		</div>
 	);
 }
 
 async function refreshMaterials(
-	token: string,
-	courseId: string,
-	isCurrent: boolean,
+	token: string, courseId: string, isCurrent: boolean,
 	setMaterials: (materials: Material[]) => void,
 ) {
 	const nextMaterials = await listCourseMaterials(token, courseId);
@@ -309,9 +272,7 @@ async function refreshMaterials(
 }
 
 async function refreshTasks(
-	token: string,
-	courseId: string,
-	isCurrent: boolean,
+	token: string, courseId: string, isCurrent: boolean,
 	setTasks: (tasks: StudyTask[]) => void,
 ) {
 	const nextTasks = await listCourseTasks(token, courseId);
