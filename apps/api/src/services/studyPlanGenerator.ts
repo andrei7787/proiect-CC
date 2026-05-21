@@ -35,11 +35,9 @@ export async function generateStudyTasks(input: {
   const { GoogleGenAI } = await import("@google/genai");
   const ai = new GoogleGenAI({ apiKey: input.apiKey });
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: [{
-      role: "user",
-      parts: [{ text: buildStudyPlanPrompt(input.course, input.materials) }]
-    }]
+    model: "gemini-2.0-flash",
+    contents: [{ role: "user", parts: [{ text: buildStudyPlanPrompt(input.course, input.materials) }] }],
+    config: { maxOutputTokens: 4096 },
   });
   return normalizeGeneratedPlan(parseJson(response.text ?? "{}"));
 }
