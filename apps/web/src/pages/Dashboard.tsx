@@ -190,7 +190,7 @@ function TasksPanel({ tasks }: { tasks: StudyTask[] }) {
 									<small>{task.estimatedMinutes} min</small>
 								</div>
 								<span
-									className={`status-badge status-${task.status === "done" ? "ready" : "uploaded"}`}
+									className={`status-badge status-${task.status}`}
 								>
 									{task.status}
 								</span>

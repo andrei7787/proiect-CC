@@ -71,6 +71,16 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 		};
 	}, [token]);
 
+	// Auto-poll materials while any is processing
+	useEffect(() => {
+		const hasProcessing = materials.some((m) => m.status === "processing");
+		if (!hasProcessing || !course) return;
+		const interval = setInterval(() => {
+			refreshMaterials(token, course.courseId, true, setMaterials);
+		}, 5000);
+		return () => clearInterval(interval);
+	}, [materials, token, course?.courseId]);
+
 	async function handleUpload() {
 		if (!course || !selectedFile) return;
 		setIsUploading(true);
@@ -100,22 +110,24 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 
 	function handleProcessMaterial(materialId: string) {
 		setError("");
+		const previousMaterials = materials;
+		setMaterials((prev) =>
+			prev.map((m) =>
+				m.materialId === materialId
+					? { ...m, status: "processing" as const }
+					: m,
+			),
+		);
 		queueMaterialProcessing(token, materialId)
 			.then(() => {
-				setMaterials((prev) =>
-					prev.map((m) =>
-						m.materialId === materialId
-							? { ...m, status: "processing" as const }
-							: m,
-					),
-				);
 				setStatus("Processing queued — refresh to check status.");
 			})
-			.catch((err: unknown) =>
+			.catch((err: unknown) => {
+				setMaterials(previousMaterials);
 				setError(
 					`Process failed: ${err instanceof Error ? err.message : String(err)}`,
-				),
-			);
+				);
+			});
 	}
 
 	async function handleGenerateStudyPlan() {
@@ -136,12 +148,18 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 		taskId: string,
 		status: StudyTaskStatus,
 	) {
-		await updateStudyTaskStatus(token, taskId, status);
+		const previousTasks = tasks;
 		setTasks((currentTasks) =>
 			currentTasks.map((task) =>
 				task.taskId === taskId ? { ...task, status } : task,
 			),
 		);
+		try {
+			await updateStudyTaskStatus(token, taskId, status);
+		} catch {
+			setTasks(previousTasks);
+			setError("Could not update task status.");
+		}
 	}
 
 	async function handleSendReminders() {

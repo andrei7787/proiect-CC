@@ -67,7 +67,7 @@ export function Login({
 			await onConfirm(email, code);
 			await onLogin(email, password);
 		} catch {
-			setLocalError("Invalid confirmation code.");
+			setLocalError("Invalid confirmation code or sign-in failed.");
 		} finally {
 			setLocalSubmitting(false);
 		}
@@ -185,7 +185,7 @@ export function Login({
 				/>
 			</label>
 			{displayError ? <p role="alert">{displayError}</p> : null}
-			<button type="submit" disabled={isDisabled}>
+			<button type="submit" disabled={isDisabled || !email || !password}>
 				{localSubmitting ? "Signing in..." : "Continue"}
 			</button>
 			<button

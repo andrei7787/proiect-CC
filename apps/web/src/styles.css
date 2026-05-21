@@ -472,9 +472,25 @@ dd {
 	color: var(--red);
 }
 
+/* Task status badges */
+.status-todo {
+	background: var(--amber-bg);
+	color: var(--amber);
+}
+
+.status-done {
+	background: var(--green-bg);
+	color: var(--green);
+}
+
+.status-skipped {
+	background: var(--bg-hover);
+	color: var(--text-faint);
+}
+
 .btn-icon {
 	background: none;
-	border: 1px solid var(--border-color);
+	border: 1px solid var(--border);
 	color: var(--text-faint);
 	cursor: pointer;
 	font-size: 14px;
@@ -490,7 +506,7 @@ dd {
 }
 
 .btn-process {
-	background: var(--primary);
+	background: var(--accent);
 	color: #fff;
 	border: none;
 	cursor: pointer;

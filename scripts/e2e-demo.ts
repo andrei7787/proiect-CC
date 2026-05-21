@@ -189,8 +189,8 @@ async function main() {
 
   // ═══ Notifications ═══
   console.log("\n── Notifications ──");
-  const notifs = await api<any[]>("/notifications", idToken);
-  ok(`${notifs.length} notifications`);
+  const notifsRes = await api<{ notifications: any[] }>("/notifications", idToken);
+  ok(`${notifsRes.notifications?.length ?? 0} notifications`);
 
   // ═══ Summary ═══
   console.log(`\n${C.b}=== E2E Complete: ${passed} passed, ${failed} failed ===${C.reset}\n`);

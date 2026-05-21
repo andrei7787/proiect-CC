@@ -140,9 +140,14 @@ npm run typecheck
 ## Milestone 5: Real Gemini PDF Processing Is Verified
 
 Done when: the deployed processor Lambda processes the demo PDF through Gemini and stores summary/key concepts in DynamoDB.
+Current status: source code has pdf-parse support via geminiClient. ProcessMaterial Lambda timeout increased from 30s → 120s for Gemini API calls. GenerateStudyPlan also at 120s. MaterialQueue now has DLQ with maxReceiveCount=3 and 14-day retention for failed processing attempts.
 
 - [x] Create short 1-2 page demo PDF about cloud/serverless study material.
-- [ ] Redeploy backend with updated geminiClient (pdf-parse). Upload, process, and verify the full pipeline.
+- [x] Update geminiClient with pdf-parse support. (code committed)
+- [x] Increase ProcessMaterial Lambda timeout from 30s to 120s for Gemini API calls.
+- [x] Increase GenerateStudyPlan Lambda timeout from 30s to 120s.
+- [x] Add DLQ to MaterialQueue with maxReceiveCount=3.
+- [ ] Redeploy backend with CDK (blocked: VocLabs credentials expired).
 
 Verification:
 
