@@ -25,9 +25,15 @@ export async function analyzeStudyMaterial(input: {
   if (isText) {
     materialContent = new TextDecoder().decode(input.fileBytes);
   } else if (isPdf) {
-    const pdfParse = (await import("pdf-parse")).default as (buf: Buffer) => Promise<{ text: string }>;
-    const parsed = await pdfParse(Buffer.from(input.fileBytes));
-    materialContent = parsed.text;
+    const pdfjsLib = await import("pdfjs-dist");
+    const doc = await pdfjsLib.getDocument({ data: Buffer.from(input.fileBytes) }).promise;
+    const pages: string[] = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      pages.push(content.items.filter((item) => "str" in item).map((item) => (item as { str: string }).str).join(" "));
+    }
+    materialContent = pages.join("\n");
   } else {
     materialContent = new TextDecoder().decode(input.fileBytes);
   }
