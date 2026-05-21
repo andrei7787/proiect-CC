@@ -6,6 +6,9 @@ import {
 	type DashboardDeadline,
 	type DashboardSummary,
 } from "../api/client";
+import { EmptyState } from "../components/EmptyState";
+import { Skeleton } from "../components/Skeleton";
+import { useToast } from "../components/Toast";
 
 interface DashboardProps {
 	token: string;
@@ -21,19 +24,18 @@ export function Dashboard({ token, onCreateCourse }: DashboardProps) {
 		notifications: [],
 	});
 	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState("");
+	const { toast } = useToast();
 
 	useEffect(() => {
 		let isCurrent = true;
 		setIsLoading(true);
-		setError("");
 
 		getDashboard(token)
 			.then((nextDashboard) => {
 				if (isCurrent) setDashboard(nextDashboard);
 			})
 			.catch(() => {
-				if (isCurrent) setError("Could not load dashboard.");
+				if (isCurrent) toast("Could not load dashboard.", "error");
 			})
 			.finally(() => {
 				if (isCurrent) setIsLoading(false);
@@ -42,19 +44,33 @@ export function Dashboard({ token, onCreateCourse }: DashboardProps) {
 		return () => {
 			isCurrent = false;
 		};
-	}, [token]);
+	}, [token, toast]);
 
 	if (isLoading) {
 		return (
-			<div className="dashboard-loading">
-				<div className="loading-spinner" />
-				<p>Loading your dashboard...</p>
+			<div className="dashboard">
+				<header className="dashboard-hero">
+					<div>
+						<h1>Dashboard</h1>
+						<Skeleton.Text lines={1} />
+					</div>
+				</header>
+
+				<div className="stats-row">
+					<Skeleton.StatCard />
+					<Skeleton.StatCard />
+					<Skeleton.StatCard />
+					<Skeleton.StatCard />
+				</div>
+
+				<div className="page-grid">
+					<Skeleton.Card />
+					<Skeleton.Card />
+					<Skeleton.Card />
+					<Skeleton.Card />
+				</div>
 			</div>
 		);
-	}
-
-	if (error) {
-		return <p role="alert">{error}</p>;
 	}
 
 	const stats = {
@@ -126,13 +142,11 @@ function CoursesPanel({ courses }: { courses: Course[] }) {
 		<section className="panel">
 			<h2>Active courses</h2>
 			{courses.length === 0 ? (
-				<div className="empty-state">
-					<span className="empty-icon">📚</span>
-					<p>No courses yet.</p>
-					<small>
-						Create your first course to get started with AI study plans.
-					</small>
-				</div>
+				<EmptyState
+					icon="books"
+					title="No courses yet"
+					description="Create your first course to get started with AI study plans."
+				/>
 			) : (
 				<ul>
 					{courses.map((course) => (
@@ -158,13 +172,11 @@ function TasksPanel({ tasks }: { tasks: StudyTask[] }) {
 		<section className="panel">
 			<h2>Today's tasks</h2>
 			{tasks.length === 0 ? (
-				<div className="empty-state">
-					<span className="empty-icon">🎯</span>
-					<p>No tasks due today.</p>
-					<small>
-						Upload course materials and generate a study plan to see tasks here.
-					</small>
-				</div>
+				<EmptyState
+					icon="target"
+					title="No tasks due today"
+					description="Upload course materials and generate a study plan to see tasks here."
+				/>
 			) : (
 				<>
 					<div className="progress-bar">
@@ -208,10 +220,10 @@ function DeadlinesPanel({ deadlines }: { deadlines: DashboardDeadline[] }) {
 		<section className="panel">
 			<h2>Upcoming deadlines</h2>
 			{deadlines.length === 0 ? (
-				<div className="empty-state">
-					<span className="empty-icon">📅</span>
-					<p>No upcoming deadlines.</p>
-				</div>
+				<EmptyState
+					icon="calendar"
+					title="No upcoming deadlines"
+				/>
 			) : (
 				<ul>
 					{deadlines.map((deadline) => (
@@ -231,11 +243,11 @@ function SummariesPanel({ summaries }: { summaries: DashboardSummary[] }) {
 		<section className="panel">
 			<h2>Recent summaries</h2>
 			{summaries.length === 0 ? (
-				<div className="empty-state">
-					<span className="empty-icon">🤖</span>
-					<p>No AI summaries yet.</p>
-					<small>Upload a study material and let Gemini analyze it.</small>
-				</div>
+				<EmptyState
+					icon="brain"
+					title="No AI summaries yet"
+					description="Upload a study material and let Gemini analyze it."
+				/>
 			) : (
 				<ul>
 					{summaries.map((summary) => (
@@ -261,11 +273,11 @@ function NotificationsPanel({
 		<section className="panel">
 			<h2>Notifications</h2>
 			{notifications.length === 0 ? (
-				<div className="empty-state">
-					<span className="empty-icon">🔔</span>
-					<p>No notifications yet.</p>
-					<small>Reminders and study alerts will appear here.</small>
-				</div>
+				<EmptyState
+					icon="bell"
+					title="No notifications yet"
+					description="Reminders and study alerts will appear here."
+				/>
 			) : (
 				<ul>
 					{notifications.map((notification) => (

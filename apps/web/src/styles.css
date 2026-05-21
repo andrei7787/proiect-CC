@@ -154,6 +154,8 @@ select {
 .content {
 	padding: 28px 32px;
 	max-width: 1060px;
+	margin: 0 auto;
+	width: 100%;
 }
 
 /* Layout grids
@@ -710,6 +712,15 @@ dd {
 	transform: translateY(-1px);
 }
 
+.hero-cta:active {
+	transform: scale(0.97) !important;
+	box-shadow: 0 2px 8px rgba(115, 138, 255, 0.15) !important;
+}
+
+.panel button:active:not(:disabled) {
+	transform: scale(0.97);
+}
+
 /* Loading
    ─────────────────────────────────────── */
 
@@ -984,6 +995,12 @@ dd {
 /* Responsive
    ─────────────────────────────────────── */
 
+@media (max-width: 1024px) {
+	.stats-row {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
 @media (max-width: 780px) {
 	.app-shell {
 		grid-template-columns: 1fr;
@@ -1020,5 +1037,36 @@ dd {
 
 	.panel.wide {
 		grid-column: 1;
+	}
+
+	.stats-row {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 480px) {
+	.stats-row {
+		grid-template-columns: 1fr 1fr;
+		gap: 8px;
+	}
+
+	.stat-card {
+		padding: 14px;
+	}
+
+	.stat-value {
+		font-size: 22px;
+	}
+
+	.course-create-panel {
+		width: 100%;
+	}
+
+	.login-panel {
+		width: 100%;
+	}
+
+	.form-row {
+		grid-template-columns: 1fr;
 	}
 }

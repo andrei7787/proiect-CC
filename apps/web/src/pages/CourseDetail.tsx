@@ -16,6 +16,10 @@ import {
 	updateStudyTaskStatus,
 	uploadFileToUrl,
 } from "../api/client";
+import { DropZone } from "../components/DropZone";
+import { EmptyState } from "../components/EmptyState";
+import { Modal } from "../components/Modal";
+import { useToast } from "../components/Toast";
 
 export interface CourseDetailProps {
 	token: string;
@@ -26,13 +30,14 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 	const [courses, setCourses] = useState<Course[]>([]);
 	const [materials, setMaterials] = useState<Material[]>([]);
 	const [tasks, setTasks] = useState<StudyTask[]>([]);
-	const [selectedFile, setSelectedFile] = useState<File | null>(null);
+	const [selectedFileName, setSelectedFileName] = useState("");
 	const [status, setStatus] = useState("PDF, TXT, or MD");
-	const [error, setError] = useState("");
 	const [isUploading, setIsUploading] = useState(false);
 	const [isGenerating, setIsGenerating] = useState(false);
 	const [reminderResult, setReminderResult] = useState("");
 	const [isSendingReminders, setIsSendingReminders] = useState(false);
+	const [deleteModal, setDeleteModal] = useState<{ materialId: string; fileName: string } | null>(null);
+	const { toast } = useToast();
 
 	const course = courses[0];
 	const readyMaterial = useMemo(
@@ -62,14 +67,15 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 			})
 			.catch((err: unknown) => {
 				if (isCurrent)
-					setError(
+					toast(
 						`Could not load course: ${err instanceof Error ? err.message : String(err)}`,
+						"error",
 					);
 			});
 		return () => {
 			isCurrent = false;
 		};
-	}, [token]);
+	}, [token, toast]);
 
 	// Auto-poll materials while any is processing
 	useEffect(() => {
@@ -81,26 +87,28 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 		return () => clearInterval(interval);
 	}, [materials, token, course?.courseId]);
 
-	async function handleUpload() {
-		if (!course || !selectedFile) return;
+	async function handleFileDrop(file: File) {
+		if (!course) return;
 		setIsUploading(true);
-		setError("");
+		setSelectedFileName(file.name);
 		setStatus("Uploading material...");
 		try {
 			const upload = await createMaterialUpload(token, {
 				courseId: course.courseId,
-				fileName: selectedFile.name,
+				fileName: file.name,
 				contentType:
-					selectedFile.type || contentTypeFromName(selectedFile.name),
+					file.type || contentTypeFromName(file.name),
 			});
-			await uploadFileToUrl(upload.uploadUrl, selectedFile);
+			await uploadFileToUrl(upload.uploadUrl, file);
 			await queueMaterialProcessing(token, upload.material.materialId);
 			const nextMaterials = await listCourseMaterials(token, course.courseId);
 			setMaterials(nextMaterials);
 			setStatus("Material queued for processing.");
+			toast(`${file.name} uploaded and queued for processing.`, "success");
 		} catch (err) {
-			setError(
+			toast(
 				`Could not upload material: ${err instanceof Error ? err.message : String(err)}`,
+				"error",
 			);
 			setStatus("Upload failed");
 		} finally {
@@ -109,7 +117,6 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 	}
 
 	function handleProcessMaterial(materialId: string) {
-		setError("");
 		const previousMaterials = materials;
 		setMaterials((prev) =>
 			prev.map((m) =>
@@ -121,11 +128,13 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 		queueMaterialProcessing(token, materialId)
 			.then(() => {
 				setStatus("Processing queued — refresh to check status.");
+				toast("Processing queued.", "info");
 			})
 			.catch((err: unknown) => {
 				setMaterials(previousMaterials);
-				setError(
+				toast(
 					`Process failed: ${err instanceof Error ? err.message : String(err)}`,
+					"error",
 				);
 			});
 	}
@@ -133,12 +142,12 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 	async function handleGenerateStudyPlan() {
 		if (!course) return;
 		setIsGenerating(true);
-		setError("");
 		try {
 			await generateStudyPlan(token, course.courseId);
 			setTasks(await listCourseTasks(token, course.courseId));
+			toast("Study plan generated!", "success");
 		} catch {
-			setError("Could not generate study plan.");
+			toast("Could not generate study plan.", "error");
 		} finally {
 			setIsGenerating(false);
 		}
@@ -158,21 +167,30 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 			await updateStudyTaskStatus(token, taskId, status);
 		} catch {
 			setTasks(previousTasks);
-			setError("Could not update task status.");
+			toast("Could not update task status.", "error");
 		}
 	}
 
 	async function handleSendReminders() {
 		setIsSendingReminders(true);
-		setError("");
 		try {
 			const { sent } = await runReminders(token);
 			setReminderResult(`${sent} reminder${sent === 1 ? "" : "s"} sent`);
+			toast(`${sent} reminder${sent === 1 ? "" : "s"} sent.`, "success");
 		} catch {
-			setError("Could not send reminders.");
+			toast("Could not send reminders.", "error");
 		} finally {
 			setIsSendingReminders(false);
 		}
+	}
+
+	function handleDeleteConfirm() {
+		if (!deleteModal) return;
+		setMaterials((prev) =>
+			prev.filter((m) => m.materialId !== deleteModal.materialId),
+		);
+		toast(`${deleteModal.fileName} removed.`, "info");
+		setDeleteModal(null);
 	}
 
 	if (!course) {
@@ -180,18 +198,18 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 			<div className="course-layout">
 				<section className="panel wide">
 					<h2>Course workspace</h2>
-					{error ? (
-						<p role="alert">{error}</p>
-					) : (
-						<div className="empty-state">
-							<p>No courses yet.</p>
-							{onCreateCourse ? (
-								<button type="button" onClick={onCreateCourse}>
-									Create New Course
-								</button>
-							) : null}
-						</div>
-					)}
+					<div className="empty-state">
+						<EmptyState
+							icon="books"
+							title="No courses yet"
+							description="Create a course and upload study materials to get AI-powered study plans."
+						/>
+						{onCreateCourse ? (
+							<button type="button" onClick={onCreateCourse}>
+								Create New Course
+							</button>
+						) : null}
+					</div>
 				</section>
 			</div>
 		);
@@ -219,27 +237,18 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 
 			<section className="panel">
 				<h2>Material upload</h2>
-				<input
-					aria-label="Material file"
-					type="file"
-					accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown"
-					onChange={(event) => {
-						const file = event.target.files?.[0] ?? null;
-						setSelectedFile(file);
-						setStatus(
-							file ? `${file.name} ready to upload` : "PDF, TXT, or MD",
-						);
-					}}
+				<DropZone
+					onFile={handleFileDrop}
+					disabled={isUploading}
+					hint={
+						selectedFileName
+							? `${selectedFileName} — uploading...`
+							: undefined
+					}
 				/>
-				<button
-					type="button"
-					disabled={!selectedFile || isUploading}
-					onClick={handleUpload}
-				>
-					{isUploading ? "Uploading..." : "Upload and process"}
-				</button>
-				<p>{status}</p>
-				{error ? <p role="alert">{error}</p> : null}
+				{status !== "PDF, TXT, or MD" && status !== "Material queued for processing." && (
+					<p>{status}</p>
+				)}
 				{materials.length > 0 ? (
 					<ul>
 						{materials.map((material) => (
@@ -264,9 +273,10 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 									aria-label={`Delete ${material.fileName}`}
 									title="Remove material"
 									onClick={() =>
-										setMaterials((prev) =>
-											prev.filter((m) => m.materialId !== material.materialId),
-										)
+										setDeleteModal({
+											materialId: material.materialId,
+											fileName: material.fileName,
+										})
 									}
 								>
 									✕
@@ -279,19 +289,24 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 
 			<section className="panel">
 				<h2>AI summary</h2>
-				<p>
-					{readyMaterial?.summary ??
-						"Upload a material and wait for processing to finish."}
-				</p>
-				<h3>Key concepts</h3>
-				{readyMaterial?.keyConcepts?.length ? (
-					<ul>
-						{readyMaterial.keyConcepts.map((concept) => (
-							<li key={concept}>{concept}</li>
-						))}
-					</ul>
+				{readyMaterial?.summary ? (
+					<>
+						<p>{readyMaterial.summary}</p>
+						<h3>Key concepts</h3>
+						{readyMaterial.keyConcepts?.length ? (
+							<ul>
+								{readyMaterial.keyConcepts.map((concept) => (
+									<li key={concept}>{concept}</li>
+								))}
+							</ul>
+						) : null}
+					</>
 				) : (
-					<p>No concepts yet.</p>
+					<EmptyState
+						icon="brain"
+						title="No summary yet"
+						description="Upload a material and wait for processing to finish."
+					/>
 				)}
 				<button
 					type="button"
@@ -333,7 +348,11 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 						))}
 					</ul>
 				) : (
-					<p>Generate a study plan after at least one material is ready.</p>
+					<EmptyState
+						icon="target"
+						title="No tasks yet"
+						description="Generate a study plan after at least one material is ready."
+					/>
 				)}
 				<button
 					type="button"
@@ -346,6 +365,20 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 					<p className="reminder-ok">{reminderResult}</p>
 				) : null}
 			</section>
+
+			<Modal
+				isOpen={deleteModal !== null}
+				onClose={() => setDeleteModal(null)}
+				title="Remove material"
+				confirmLabel="Remove"
+				onConfirm={handleDeleteConfirm}
+				variant="danger"
+			>
+				<p>
+					Are you sure you want to remove <strong>{deleteModal?.fileName}</strong>?
+					This cannot be undone.
+				</p>
+			</Modal>
 		</div>
 	);
 }

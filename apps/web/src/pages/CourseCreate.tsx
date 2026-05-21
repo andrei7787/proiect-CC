@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from "react";
+import { useToast } from "../components/Toast";
 
 interface CourseCreateProps {
 	token: string;
@@ -29,12 +30,11 @@ export function CourseCreate({
 	});
 	const [difficulty, setDifficulty] = useState("medium");
 	const [weeklyHours, setWeeklyHours] = useState(10);
-	const [error, setError] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const { toast } = useToast();
 
 	async function handleSubmit(event: FormEvent) {
 		event.preventDefault();
-		setError("");
 		setIsSubmitting(true);
 		try {
 			await onCreate({
@@ -43,8 +43,9 @@ export function CourseCreate({
 				difficulty,
 				weeklyHoursAvailable: weeklyHours,
 			});
+			toast(`Course "${name.trim()}" created!`, "success");
 		} catch {
-			setError("Could not create course. Please try again.");
+			toast("Could not create course. Please try again.", "error");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -103,15 +104,13 @@ export function CourseCreate({
 							type="range"
 							name="weeklyHours"
 							min="1"
-							max="40"
+							max="80"
 							value={weeklyHours}
 							onChange={(event) => setWeeklyHours(Number(event.target.value))}
 						/>
 						<span className="hours-value">{weeklyHours}h</span>
 					</div>
 				</label>
-
-				{error ? <p role="alert">{error}</p> : null}
 
 				<div className="form-actions">
 					<button
