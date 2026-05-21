@@ -230,16 +230,21 @@ npm --workspace apps/web run test
 npm --workspace apps/web run build
 ```
 
-## Milestone 9: Amplify Hosting Is Live
+## Milestone 9: Frontend Hosting Is Live
 
-Done when: the React app is reachable through an Amplify URL and talks to deployed AWS backend.
+Done when: the React app is reachable through a public URL and talks to deployed AWS backend.
 
-- [ ] Create Amplify app manually.
-- [ ] Connect repository/branch.
-- [ ] Configure build command for Vite workspace.
-- [ ] Set frontend env vars from CDK outputs.
-- [ ] Deploy frontend.
-- [ ] Confirm app loads from Amplify URL.
+Current status: AWS Amplify is blocked by VocLabs (explicit deny in identity-based policy for `amplify:*`). Switched to GitHub Pages.
+Current status: Vite base path set to `/proiect-CC/`. GitHub Actions deploy workflow created at `.github/workflows/deploy.yml`.
+
+- [x] Create Amplify app manually. (Blocked by VocLabs — using GitHub Pages instead)
+- [x] Connect repository/branch. (GitHub repo `andrei7787/proiect-CC`)
+- [x] Configure build command for Vite workspace. (`amplify.yml` created, GitHub Actions workflow added)
+- [x] Set frontend env vars from CDK outputs. (VITE_* vars in `.env`, hardcoded for GitHub Pages)
+- [x] Set Vite base path for GitHub Pages. (`/proiect-CC/`)
+- [x] Create GitHub Actions deploy workflow. (`.github/workflows/deploy.yml`)
+- [ ] Push and trigger GitHub Pages deployment.
+- [ ] Confirm app loads from GitHub Pages URL.
 - [ ] Confirm register/login works from hosted URL.
 - [ ] Confirm CORS/API calls work from hosted URL.
 - [ ] Confirm full demo flow works from hosted URL.
@@ -247,7 +252,7 @@ Done when: the React app is reachable through an Amplify URL and talks to deploy
 Verification:
 
 ```text
-Open Amplify URL and run the full target demo flow.
+Open https://andrei7787.github.io/proiect-CC/ and run the full target demo flow.
 ```
 
 ## Milestone 10: End-To-End Demo Rehearsal Passes

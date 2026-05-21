@@ -1,5 +1,5 @@
 import { Aws, CfnOutput, CfnParameter, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
-import { HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
+import { HttpApi, HttpMethod, CorsHttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpUserPoolAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { UserPool, UserPoolClient } from "aws-cdk-lib/aws-cognito";
@@ -15,7 +15,7 @@ import { Secret } from "aws-cdk-lib/aws-secretsmanager";
 import { Topic } from "aws-cdk-lib/aws-sns";
 import { EmailSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
 import { Queue } from "aws-cdk-lib/aws-sqs";
-import { Construct } from "constructs";
+import type { Construct } from "constructs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -152,7 +152,13 @@ export class AiStudyPlannerStack extends Stack {
     const authorizer = new HttpUserPoolAuthorizer("CognitoAuthorizer", userPool, {
       userPoolClients: [userPoolClient]
     });
-    const api = new HttpApi(this, "HttpApi");
+    const api = new HttpApi(this, "HttpApi", {
+      corsPreflight: {
+        allowOrigins: ["*"],
+        allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.PATCH, CorsHttpMethod.PUT, CorsHttpMethod.OPTIONS],
+        allowHeaders: ["authorization", "content-type"]
+      }
+    });
     api.addRoutes({
       path: "/courses",
       methods: [HttpMethod.POST],
