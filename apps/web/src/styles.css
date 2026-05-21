@@ -472,6 +472,23 @@ dd {
 	color: var(--red);
 }
 
+.btn-icon {
+	background: none;
+	border: 1px solid var(--border-color);
+	color: var(--text-faint);
+	cursor: pointer;
+	font-size: 14px;
+	padding: 2px 8px;
+	border-radius: var(--radius);
+	margin-left: 8px;
+	transition: all 0.15s ease;
+}
+.btn-icon:hover {
+	background: var(--red-bg);
+	color: var(--red);
+	border-color: var(--red);
+}
+
 @keyframes pulse-glow {
 	0%,
 	100% {
