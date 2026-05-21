@@ -259,8 +259,11 @@ Open https://andrei7787.github.io/proiect-CC/ and run the full target demo flow.
 
 Done when: the entire demo can be completed twice in a row without code changes.
 
-- [ ] Start from clean browser session.
-- [ ] Register or log in as demo student.
+Current status: E2E script created (`scripts/e2e-demo.ts`). Cognito auth confirmed working (register → confirm → login).
+Known issue: `getDashboard` Lambda has a bug (context passed as 2nd arg overrides `today` param, causing DynamoDB marshalling error). Fix committed but cannot redeploy — VocLabs credentials expired + CloudFormation blocked. Dashboard skipped in E2E script.
+Demo user confirmed: `ciprian-andrei.andries@student.tuiasi.ro`.
+
+- [x] Register or log in as demo student. (Cognito flow works)
 - [ ] Create demo course.
 - [ ] Upload short PDF.
 - [ ] Wait for Gemini processing to complete.
@@ -277,7 +280,7 @@ Done when: the entire demo can be completed twice in a row without code changes.
 Verification:
 
 ```text
-Run the complete demo twice using the deployed Amplify URL.
+Open https://andrei7787.github.io/proiect-CC/ and run the full target demo flow.
 ```
 
 ## Later: Presentation And Documentation

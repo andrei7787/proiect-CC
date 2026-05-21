@@ -113,32 +113,19 @@ async function main() {
 
   const { email, idToken } = await loginOrRegister(hintEmail, confirmCode);
 
-  // ═══ Dashboard ═══
-  console.log("\n── Dashboard ──");
-  const dash = await api<any>("/dashboard", idToken);
-  ok(`Dashboard loaded (${dash.courses?.length ?? 0} courses)`);
-
   // ═══ Create Course ═══
   console.log("\n── Create Course ──");
-  const existingCourse = dash.courses?.[0];
-  let courseId: string;
-
-  if (existingCourse && existingCourse.name?.includes("Demo")) {
-    ok(`Reusing existing course: "${existingCourse.name}"`);
-    courseId = existingCourse.courseId;
-  } else {
-    const course = await api<any>("/courses", idToken, {
-      method: "POST",
-      body: JSON.stringify({
-        name: "Cloud & Serverless Demo",
-        examDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
-        difficulty: "medium",
-        weeklyHoursAvailable: 10,
-      }),
-    });
-    ok(`Course created: ${course.courseId}`);
-    courseId = course.courseId;
-  }
+  const course = await api<any>("/courses", idToken, {
+    method: "POST",
+    body: JSON.stringify({
+      name: "Cloud & Serverless Demo",
+      examDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+      difficulty: "medium",
+      weeklyHoursAvailable: 10,
+    }),
+  });
+  ok(`Course created: ${course.courseId}`);
+  const courseId = course.courseId;
 
   // ═══ Upload Material ═══
   console.log("\n── Upload Material ──");

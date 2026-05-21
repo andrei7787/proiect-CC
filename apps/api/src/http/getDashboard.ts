@@ -5,9 +5,10 @@ import { listDueTasks, listNotificationsForUser } from "../services/reminderRepo
 import { getUserId } from "./auth.js";
 import { json, problem } from "./response.js";
 
-export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer, today = new Date().toISOString().slice(0, 10)) {
+export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
   try {
     const userId = getUserId(event);
+    const today = new Date().toISOString().slice(0, 10);
     const [courses, materials, todayTasks, notifications] = await Promise.all([
       listCoursesByUser(required("COURSES_TABLE"), userId),
       listMaterialsForUser(required("MATERIALS_TABLE"), userId),
