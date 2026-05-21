@@ -7,6 +7,7 @@ import {
   listCourseTasks,
   listCourses,
   queueMaterialProcessing,
+  runReminders,
   updateStudyTaskStatus,
   uploadFileToUrl
 } from "../api/client";
@@ -24,6 +25,8 @@ export function CourseDetail({ token }: CourseDetailProps) {
   const [error, setError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [reminderResult, setReminderResult] = useState("");
+  const [isSendingReminders, setIsSendingReminders] = useState(false);
 
   const course = courses[0];
   const readyMaterial = useMemo(
@@ -96,6 +99,19 @@ export function CourseDetail({ token }: CourseDetailProps) {
     )));
   }
 
+  async function handleSendReminders() {
+    setIsSendingReminders(true);
+    setError("");
+    try {
+      const { sent } = await runReminders(token);
+      setReminderResult(`${sent} reminder${sent === 1 ? "" : "s"} sent`);
+    } catch {
+      setError("Could not send reminders.");
+    } finally {
+      setIsSendingReminders(false);
+    }
+  }
+
   if (!course) {
     return (
       <div className="course-layout">
@@ -140,7 +156,7 @@ export function CourseDetail({ token }: CourseDetailProps) {
             {materials.map((material) => (
               <li key={material.materialId}>
                 <span>{material.fileName}</span>
-                <small>{material.status}</small>
+                <span className={`status-badge status-${material.status}`}>{material.status}</span>
               </li>
             ))}
           </ul>
@@ -164,7 +180,7 @@ export function CourseDetail({ token }: CourseDetailProps) {
       <section className="panel wide">
         <h2>Study tasks</h2>
         {tasks.length > 0 ? (
-          <ul>
+          <ul className="task-list">
             {tasks.map((task) => (
               <li key={task.taskId}>
                 <div>
@@ -187,6 +203,10 @@ export function CourseDetail({ token }: CourseDetailProps) {
             ))}
           </ul>
         ) : <p>Generate a study plan after at least one material is ready.</p>}
+        <button type="button" disabled={isSendingReminders} onClick={handleSendReminders}>
+          {isSendingReminders ? "Sending..." : "Send Reminders"}
+        </button>
+        {reminderResult ? <p className="reminder-ok">{reminderResult}</p> : null}
       </section>
     </div>
   );

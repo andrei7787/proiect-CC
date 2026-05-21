@@ -20,7 +20,7 @@ export async function loginWithCognito(email: string, password: string): Promise
 
   const result = await client.send(new InitiateAuthCommand({
     AuthFlow: AuthFlowType.USER_PASSWORD_AUTH,
-    ClientId: requiredEnv("VITE_COGNITO_CLIENT_ID"),
+    ClientId: requiredEnv("VITE_COGNITO_USER_POOL_CLIENT_ID"),
     AuthParameters: {
       USERNAME: email,
       PASSWORD: password

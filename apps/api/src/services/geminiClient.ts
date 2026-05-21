@@ -12,26 +12,35 @@ export async function analyzeStudyMaterial(input: {
 }): Promise<GeminiMaterialResult> {
   const { GoogleGenAI } = await import("@google/genai");
   const ai = new GoogleGenAI({ apiKey: input.apiKey });
+  const promptText = [
+    "Analyze this study material for a university student.",
+    "Return JSON only with summary, keyConcepts, and recommendedFocusAreas.",
+    `File name: ${input.fileName}`
+  ];
+
+  const isText = input.contentType === "text/plain" || input.contentType === "text/markdown";
+  const isPdf = input.contentType === "application/pdf";
+  let materialContent = "";
+
+  if (isText) {
+    materialContent = new TextDecoder().decode(input.fileBytes);
+  } else if (isPdf) {
+    const pdfParse = (await import("pdf-parse")).default as (buf: Buffer) => Promise<{ text: string }>;
+    const parsed = await pdfParse(Buffer.from(input.fileBytes));
+    materialContent = parsed.text;
+  } else {
+    materialContent = new TextDecoder().decode(input.fileBytes);
+  }
+
+  if (!materialContent.trim()) throw new Error("could not extract text from material");
+
+  const parts = [{
+    text: promptText.join("\n") + "\n\nMaterial content:\n" + materialContent
+  }];
+
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-lite",
-    contents: [{
-      role: "user",
-      parts: [
-        {
-          text: [
-            "Analyze this study material for a university student.",
-            "Return JSON only with summary, keyConcepts, and recommendedFocusAreas.",
-            `File name: ${input.fileName}`
-          ].join("\n")
-        },
-        {
-          inlineData: {
-            mimeType: input.contentType,
-            data: Buffer.from(input.fileBytes).toString("base64")
-          }
-        }
-      ]
-    }]
+    contents: [{ role: "user", parts }]
   });
   return parseGeminiJson(response.text ?? "{}");
 }

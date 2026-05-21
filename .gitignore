@@ -6,3 +6,4 @@ coverage/
 cdk.out/
 .superpowers/
 *.tsbuildinfo
+.pi-lens/

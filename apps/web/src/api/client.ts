@@ -161,3 +161,10 @@ export async function updateStudyTaskStatus(
     body: JSON.stringify({ status })
   });
 }
+
+export async function runReminders(token: string): Promise<{ sent: number }> {
+  return apiRequest<{ sent: number }>("/reminders/run", {
+    method: "POST",
+    token
+  });
+}

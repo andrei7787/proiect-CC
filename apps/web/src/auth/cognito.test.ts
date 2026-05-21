@@ -13,7 +13,7 @@ describe("loginWithCognito", () => {
   beforeEach(() => {
     send.mockReset();
     vi.stubEnv("VITE_AWS_REGION", "us-east-1");
-    vi.stubEnv("VITE_COGNITO_CLIENT_ID", "client-1");
+    vi.stubEnv("VITE_COGNITO_USER_POOL_CLIENT_ID", "client-1");
   });
 
   it("returns Cognito tokens for valid credentials", async () => {

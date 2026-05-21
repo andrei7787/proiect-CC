@@ -58,13 +58,7 @@ export async function markMaterialReady(
   await client.send(new UpdateCommand({
     TableName: tableName,
     Key: { materialId },
-    UpdateExpression: [
-      "SET #status = :status",
-      "summary = :summary",
-      "keyConcepts = :keyConcepts",
-      "processedAt = :processedAt",
-      "REMOVE errorMessage"
-    ].join(" "),
+    UpdateExpression: "SET #status = :status, summary = :summary, keyConcepts = :keyConcepts, processedAt = :processedAt REMOVE errorMessage",
     ExpressionAttributeNames: { "#status": "status" },
     ExpressionAttributeValues: {
       ":status": "ready",

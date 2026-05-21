@@ -155,7 +155,7 @@ function NotificationsPanel({ notifications, isLoading, error }: {
       {!isLoading && !error && notifications.length > 0 ? (
         <ul>
           {notifications.map((notification) => (
-            <li key={notification.notificationId}>
+            <li key={notification.notificationId} className="notification-item">
               <span>{notification.message}</span>
               <small>{notification.status}</small>
             </li>

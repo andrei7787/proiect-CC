@@ -13,7 +13,8 @@ const mocks = vi.hoisted(() => ({
   listCourseMaterials: vi.fn(),
   generateStudyPlan: vi.fn(),
   listCourseTasks: vi.fn(),
-  updateStudyTaskStatus: vi.fn()
+  updateStudyTaskStatus: vi.fn(),
+  runReminders: vi.fn()
 }));
 
 vi.mock("./auth/cognito", () => ({ loginWithCognito: mocks.loginWithCognito }));
@@ -26,7 +27,8 @@ vi.mock("./api/client", () => ({
   listCourseMaterials: mocks.listCourseMaterials,
   generateStudyPlan: mocks.generateStudyPlan,
   listCourseTasks: mocks.listCourseTasks,
-  updateStudyTaskStatus: mocks.updateStudyTaskStatus
+  updateStudyTaskStatus: mocks.updateStudyTaskStatus,
+  runReminders: mocks.runReminders
 }));
 
 describe("App", () => {
@@ -52,6 +54,8 @@ describe("App", () => {
     mocks.listCourseTasks.mockReset();
     mocks.listCourseTasks.mockResolvedValue([]);
     mocks.updateStudyTaskStatus.mockReset();
+    mocks.runReminders.mockReset();
+    mocks.runReminders.mockResolvedValue({ sent: 0 });
   });
 
   afterEach(() => {
@@ -77,7 +81,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "Password123!" } });
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
-    expect(await screen.findByText("AI Study Planner")).toBeInTheDocument();
+    expect(await screen.findByText("StudyPlanner")).toBeInTheDocument();
     expect(localStorage.getItem("ai-study-planner.auth")).toContain("id-token-1");
   });
 
@@ -284,5 +288,32 @@ describe("App", () => {
     expect(mocks.generateStudyPlan).toHaveBeenCalledWith("id-token-1", "course-1");
     expect(mocks.listCourseTasks).toHaveBeenCalledWith("id-token-1", "course-1");
     expect(mocks.updateStudyTaskStatus).toHaveBeenCalledWith("id-token-1", "task-1", "done");
+  });
+
+  it("triggers reminders and shows the count when the user clicks Send Reminders", async () => {
+    localStorage.setItem("ai-study-planner.auth", JSON.stringify({
+      idToken: "id-token-1",
+      accessToken: "access-token-1"
+    }));
+    mocks.listCourses.mockResolvedValueOnce([{
+      courseId: "course-1",
+      userId: "user-1",
+      name: "Cloud Computing",
+      examDate: "2026-06-10",
+      difficulty: "hard",
+      weeklyHoursAvailable: 8,
+      createdAt: "2026-05-14T00:00:00.000Z",
+      updatedAt: "2026-05-14T00:00:00.000Z"
+    }]);
+    mocks.runReminders.mockResolvedValueOnce({ sent: 2 });
+
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "Course" }));
+
+    expect(await screen.findByRole("button", { name: "Send Reminders" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Send Reminders" }));
+
+    expect(mocks.runReminders).toHaveBeenCalledWith("id-token-1");
+    expect(await screen.findByText(/2 reminder/)).toBeInTheDocument();
   });
 });

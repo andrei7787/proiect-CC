@@ -41,7 +41,13 @@ export function App() {
   if (!session) {
     return (
       <main className="app-shell">
-        <section className="content">
+        <aside className="sidebar" aria-label="Brand">
+          <div className="sidebar-logo">
+            StudyPlanner
+            <span>AI-Powered</span>
+          </div>
+        </aside>
+        <section className="content login-wrapper">
           <Login error={loginError} isSubmitting={isLoggingIn} onLogin={handleLogin} />
         </section>
       </main>
@@ -51,12 +57,17 @@ export function App() {
   return (
     <main className="app-shell">
       <aside className="sidebar">
-        <h1>AI Study Planner</h1>
+        <div className="sidebar-logo">
+          StudyPlanner
+          <span>AI-Powered</span>
+        </div>
         <nav aria-label="Primary">
-          <button type="button" onClick={() => setView("dashboard")}>Dashboard</button>
-          <button type="button" onClick={() => setView("course")}>Course</button>
-          <button type="button" onClick={handleLogout}>Logout</button>
+          <button type="button" className={view === "dashboard" ? "nav-active" : ""} onClick={() => setView("dashboard")}>Dashboard</button>
+          <button type="button" className={view === "course" ? "nav-active" : ""} onClick={() => setView("course")}>Course</button>
         </nav>
+        <div className="sidebar-footer">
+          <button type="button" onClick={handleLogout}>Logout</button>
+        </div>
       </aside>
       <section className="content">
         {view === "dashboard" && <Dashboard token={session.idToken} />}

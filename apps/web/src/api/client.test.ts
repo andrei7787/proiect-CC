@@ -8,6 +8,7 @@ import {
   listCourseTasks,
   listCourses,
   queueMaterialProcessing,
+  runReminders,
   updateStudyTaskStatus,
   uploadFileToUrl
 } from "./client";
@@ -240,5 +241,15 @@ describe("apiRequest", () => {
       method: "PATCH",
       body: JSON.stringify({ status: "done" })
     }));
+  });
+
+  it("triggers reminders for the authenticated user", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ sent: 3 }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await runReminders("id-token-1");
+
+    expect(result.sent).toBe(3);
+    expect(fetchMock).toHaveBeenCalledWith("/reminders/run", expect.objectContaining({ method: "POST" }));
   });
 });
