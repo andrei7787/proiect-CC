@@ -129,7 +129,7 @@ export function App() {
 						onCreateCourse={() => setView("course-create")}
 					/>
 				)}
-				{view === "course" && <CourseDetail token={session.idToken} />}
+				{view === "course" && <CourseDetail token={session.idToken} onCreateCourse={() => setView("course-create")} />}
 				{view === "course-create" && (
 					<CourseCreate
 						token={session.idToken}

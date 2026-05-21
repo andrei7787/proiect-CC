@@ -14,9 +14,10 @@ import {
 
 export interface CourseDetailProps {
   token: string;
+  onCreateCourse?: () => void;
 }
 
-export function CourseDetail({ token }: CourseDetailProps) {
+export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [tasks, setTasks] = useState<StudyTask[]>([]);
@@ -117,7 +118,18 @@ export function CourseDetail({ token }: CourseDetailProps) {
       <div className="course-layout">
         <section className="panel wide">
           <h2>Course workspace</h2>
-          {error ? <p role="alert">{error}</p> : <p>No courses yet.</p>}
+          {error ? (
+            <p role="alert">{error}</p>
+          ) : (
+            <div className="empty-state">
+              <p>No courses yet.</p>
+              {onCreateCourse ? (
+                <button type="button" onClick={onCreateCourse}>
+                  Create New Course
+                </button>
+              ) : null}
+            </div>
+          )}
         </section>
       </div>
     );
