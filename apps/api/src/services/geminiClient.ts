@@ -25,8 +25,8 @@ export async function analyzeStudyMaterial(input: {
   if (isText) {
     materialContent = new TextDecoder().decode(input.fileBytes);
   } else if (isPdf) {
-    const pdfjsLib = await import("pdfjs-dist");
-    const doc = await pdfjsLib.getDocument({ data: Buffer.from(input.fileBytes) }).promise;
+    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    const doc = await pdfjsLib.getDocument(input.fileBytes).promise;
     const pages: string[] = [];
     for (let i = 1; i <= doc.numPages; i++) {
       const page = await doc.getPage(i);
