@@ -502,6 +502,20 @@ describe("App", () => {
 				updatedAt: "2026-05-14T00:00:00.000Z",
 			},
 		]);
+		mocks.listCourseMaterials.mockResolvedValueOnce([]);
+		mocks.listCourseTasks.mockResolvedValueOnce([
+			{
+				taskId: "task-1",
+				planId: "plan-1",
+				courseId: "course-1",
+				userId: "user-1",
+				date: "2026-06-01",
+				title: "Review SQS",
+				description: "Study SQS",
+				estimatedMinutes: 30,
+				status: "todo",
+			},
+		]);
 		mocks.runReminders.mockResolvedValueOnce({ sent: 2 });
 
 		render(<App />);

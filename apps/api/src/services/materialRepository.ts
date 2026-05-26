@@ -58,16 +58,17 @@ export async function markMaterialReady(
   await client.send(new UpdateCommand({
     TableName: tableName,
     Key: { materialId },
-    UpdateExpression: "SET #status = :status, summary = :summary, keyConcepts = :keyConcepts, processedAt = :processedAt REMOVE errorMessage",
+    UpdateExpression: "SET #status = :status, summary = :summary, keyConcepts = :keyConcepts, recommendedFocusAreas = :focusAreas, processedAt = :processedAt REMOVE errorMessage",
     ExpressionAttributeNames: { "#status": "status" },
     ExpressionAttributeValues: {
       ":status": "ready",
       ":summary": result.summary,
       ":keyConcepts": result.keyConcepts,
+      ":focusAreas": result.recommendedFocusAreas ?? [],
       ":processedAt": processedAt
     }
   }));
-  return { materialId, status: "ready", summary: result.summary, keyConcepts: result.keyConcepts, processedAt };
+  return { materialId, status: "ready", summary: result.summary, keyConcepts: result.keyConcepts, recommendedFocusAreas: result.recommendedFocusAreas, processedAt };
 }
 
 export async function markMaterialFailed(tableName: string, materialId: string, errorMessage: string): Promise<void> {

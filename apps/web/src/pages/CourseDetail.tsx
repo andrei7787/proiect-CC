@@ -217,26 +217,28 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 
 	return (
 		<div className="course-layout">
-			<section className="panel wide">
+			<section className="panel wide course-header">
 				<h2>{course.name}</h2>
-				<dl>
-					<div>
+				<dl className="course-meta">
+					<div className="meta-item">
 						<dt>Exam date</dt>
 						<dd>{course.examDate}</dd>
 					</div>
-					<div>
+					<div className="meta-item">
 						<dt>Difficulty</dt>
-						<dd>{course.difficulty}</dd>
+						<dd className={`difficulty difficulty-${course.difficulty}`}>
+							{course.difficulty}
+						</dd>
 					</div>
-					<div>
+					<div className="meta-item">
 						<dt>Weekly hours</dt>
-						<dd>{course.weeklyHoursAvailable}</dd>
+						<dd>{course.weeklyHoursAvailable}h</dd>
 					</div>
 				</dl>
 			</section>
 
 			<section className="panel">
-				<h2>Material upload</h2>
+				<h2>Materials</h2>
 				<DropZone
 					onFile={handleFileDrop}
 					disabled={isUploading}
@@ -246,70 +248,93 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 							: undefined
 					}
 				/>
-				{status !== "PDF, TXT, or MD" && status !== "Material queued for processing." && (
-					<p>{status}</p>
-				)}
 				{materials.length > 0 ? (
-					<ul>
+					<ul className="material-list">
 						{materials.map((material) => (
 							<li key={material.materialId}>
-								<span>{material.fileName}</span>
-								<span className={`status-badge status-${material.status}`}>
-									{material.status}
-								</span>
-								{material.status === "uploaded" ||
-								material.status === "failed" ? (
+								<div className="material-info">
+									<span className="material-name">{material.fileName}</span>
+									{material.status === "failed" && material.errorMessage ? (
+										<span className="material-error">{material.errorMessage}</span>
+									) : null}
+								</div>
+								<div className="material-actions">
+									<span className={`status-badge status-${material.status}`}>
+										{material.status}
+									</span>
+									{material.status === "uploaded" ||
+									material.status === "failed" ? (
+										<button
+											type="button"
+											className="btn-process"
+											onClick={() => handleProcessMaterial(material.materialId)}
+										>
+											Process
+										</button>
+									) : null}
 									<button
 										type="button"
-										className="btn-process"
-										onClick={() => handleProcessMaterial(material.materialId)}
+										className="btn-icon"
+										aria-label={`Delete ${material.fileName}`}
+										title="Remove material"
+										onClick={() =>
+											setDeleteModal({
+												materialId: material.materialId,
+												fileName: material.fileName,
+											})
+										}
 									>
-										Process
+										✕
 									</button>
-								) : null}
-								<button
-									type="button"
-									className="btn-icon"
-									aria-label={`Delete ${material.fileName}`}
-									title="Remove material"
-									onClick={() =>
-										setDeleteModal({
-											materialId: material.materialId,
-											fileName: material.fileName,
-										})
-									}
-								>
-									✕
-								</button>
+								</div>
 							</li>
 						))}
 					</ul>
-				) : null}
+				) : (
+					<EmptyState
+						icon="books"
+						title="No materials"
+						description="Drop a PDF, TXT, or Markdown file to begin."
+					/>
+				)}
 			</section>
 
 			<section className="panel">
-				<h2>AI summary</h2>
+				<h2>AI Analysis</h2>
 				{readyMaterial?.summary ? (
-					<>
-						<p>{readyMaterial.summary}</p>
-						<h3>Key concepts</h3>
+					<div className="analysis-content">
+						<p className="analysis-summary">{readyMaterial.summary}</p>
 						{readyMaterial.keyConcepts?.length ? (
-							<ul>
-								{readyMaterial.keyConcepts.map((concept) => (
-									<li key={concept}>{concept}</li>
-								))}
-							</ul>
+							<>
+								<h3>Key concepts</h3>
+								<ul className="concept-tags">
+									{readyMaterial.keyConcepts.map((concept) => (
+										<li key={concept} className="concept-tag">{concept}</li>
+									))}
+								</ul>
+							</>
 						) : null}
-					</>
+						{readyMaterial.recommendedFocusAreas?.length ? (
+							<>
+								<h3>Focus areas</h3>
+								<ul className="focus-list">
+									{readyMaterial.recommendedFocusAreas.map((area) => (
+										<li key={area}>{area}</li>
+									))}
+								</ul>
+							</>
+						) : null}
+					</div>
 				) : (
 					<EmptyState
 						icon="brain"
-						title="No summary yet"
-						description="Upload a material and wait for processing to finish."
+						title="No analysis yet"
+						description="Upload a material and wait for AI processing to finish."
 					/>
 				)}
 				<button
 					type="button"
+					className="btn-primary"
 					disabled={!readyMaterial || isGenerating}
 					onClick={handleGenerateStudyPlan}
 				>
@@ -322,15 +347,16 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 				{tasks.length > 0 ? (
 					<ul className="task-list">
 						{tasks.map((task) => (
-							<li key={task.taskId}>
-								<div>
+							<li key={task.taskId} className={`task-item task-${task.status}`}>
+								<div className="task-info">
 									<strong>{task.title}</strong>
 									<p>{task.description}</p>
 									<small>
-										{task.date} - {task.estimatedMinutes} min
+										{task.date} &middot; {task.estimatedMinutes} min
 									</small>
 								</div>
 								<select
+									className="status-select"
 									aria-label={`${task.title} status`}
 									value={task.status}
 									onChange={(event) => {
@@ -354,16 +380,19 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 						description="Generate a study plan after at least one material is ready."
 					/>
 				)}
-				<button
-					type="button"
-					disabled={isSendingReminders}
-					onClick={handleSendReminders}
-				>
-					{isSendingReminders ? "Sending..." : "Send Reminders"}
-				</button>
-				{reminderResult ? (
-					<p className="reminder-ok">{reminderResult}</p>
-				) : null}
+				<div className="reminder-bar">
+					<button
+						type="button"
+						className="btn-secondary"
+						disabled={isSendingReminders || tasks.length === 0}
+						onClick={handleSendReminders}
+					>
+						{isSendingReminders ? "Sending..." : "Send Reminders"}
+					</button>
+					{reminderResult ? (
+						<span className="reminder-ok">{reminderResult}</span>
+					) : null}
+				</div>
 			</section>
 
 			<Modal

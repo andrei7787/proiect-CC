@@ -23,6 +23,7 @@ export interface Material {
   status: MaterialStatus;
   summary?: string;
   keyConcepts?: string[];
+  recommendedFocusAreas?: string[];
   createdAt: string;
   processedAt?: string;
   errorMessage?: string;
