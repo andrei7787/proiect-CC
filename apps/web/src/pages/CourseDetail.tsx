@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
 	Course,
 	Material,
@@ -37,9 +37,10 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 	const [reminderResult, setReminderResult] = useState("");
 	const [isSendingReminders, setIsSendingReminders] = useState(false);
 	const [deleteModal, setDeleteModal] = useState<{ materialId: string; fileName: string } | null>(null);
+	const [courseIndex, setCourseIndex] = useState(0);
 	const { toast } = useToast();
 
-	const course = courses[0];
+	const course = courses[courseIndex];
 	const readyMaterial = useMemo(
 		() =>
 			materials.find(
@@ -48,21 +49,28 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 		[materials],
 	);
 
+	const loadCourseData = useCallback(
+		(index: number, coursesList: Course[]) => {
+			const selected = coursesList[index];
+			if (!selected) return;
+			setCourseIndex(index);
+			void refreshMaterials(token, selected.courseId, true, setMaterials);
+			void refreshTasks(token, selected.courseId, true, setTasks);
+			setReminderResult("");
+		},
+		[token],
+	);
+
 	useEffect(() => {
 		let isCurrent = true;
 		listCourses(token)
 			.then((nextCourses) => {
-				if (!isCurrent) return;
+				if (!isCurrent || nextCourses.length === 0) return;
 				setCourses(nextCourses);
-				const firstCourse = nextCourses[0];
-				if (firstCourse) {
-					void refreshMaterials(
-						token,
-						firstCourse.courseId,
-						isCurrent,
-						setMaterials,
-					);
-					void refreshTasks(token, firstCourse.courseId, isCurrent, setTasks);
+				if (courseIndex >= nextCourses.length) {
+					loadCourseData(nextCourses.length - 1, nextCourses);
+				} else {
+					loadCourseData(courseIndex, nextCourses);
 				}
 			})
 			.catch((err: unknown) => {
@@ -219,6 +227,22 @@ export function CourseDetail({ token, onCreateCourse }: CourseDetailProps) {
 		<div className="course-layout">
 			<section className="panel wide course-header">
 				<h2>{course.name}</h2>
+				{courses.length > 1 ? (
+					<select
+						className="course-select"
+						value={courseIndex}
+						aria-label="Select course"
+						onChange={(event) =>
+							loadCourseData(Number(event.target.value), courses)
+						}
+					>
+						{courses.map((c, index) => (
+							<option key={c.courseId} value={index}>
+								{c.name}
+							</option>
+						))}
+					</select>
+				) : null}
 				<dl className="course-meta">
 					<div className="meta-item">
 						<dt>Exam date</dt>
