@@ -43,14 +43,17 @@ export async function generateStudyTasks(input: {
 	const { GoogleGenAI } = await import("@google/genai");
 	const ai = new GoogleGenAI({ apiKey: input.apiKey });
 	const response = await ai.models.generateContent({
-		model: "gemini-2.0-flash",
+		model: "gemini-2.5-flash",
 		contents: [
 			{
 				role: "user",
 				parts: [{ text: buildStudyPlanPrompt(input.course, input.materials) }],
 			},
 		],
-		config: { maxOutputTokens: 4096 },
+		config: {
+			maxOutputTokens: 4096,
+			responseMimeType: "application/json",
+		},
 	});
 	return normalizeGeneratedPlan(parseJson(response.text ?? "{}"));
 }
@@ -80,11 +83,18 @@ export function buildStudyPlanPrompt(
 }
 
 function parseJson(text: string): unknown {
-	return JSON.parse(
-		text
-			.trim()
-			.replace(/^```json\s*/i, "")
-			.replace(/^```\s*/i, "")
-			.replace(/\s*```$/i, ""),
-	);
+	const cleaned = text
+		.trim()
+		.replace(/^```(json)?\s*/i, "")
+		.replace(/\s*```$/i, "");
+	try {
+		return JSON.parse(cleaned);
+	} catch (firstError) {
+		const bracket = cleaned.indexOf("{");
+		const lastBracket = cleaned.lastIndexOf("}");
+		if (bracket >= 0 && lastBracket > bracket) {
+			return JSON.parse(cleaned.slice(bracket, lastBracket + 1));
+		}
+		throw firstError;
+	}
 }
