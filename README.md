@@ -14,7 +14,7 @@ Aplicatie web care ajuta studentii sa isi organizeze cursurile, materialele si p
 
 ## Arhitectura
 
-![Diagrama servicii](docs/assets/architecture-services.png)
+![Diagrama servicii](architecture-services.png)
 
 ### Servicii AWS
 
