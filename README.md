@@ -14,7 +14,7 @@ Aplicatie web care ajuta studentii sa isi organizeze cursurile, materialele si p
 
 ## Arhitectura
 
-![Diagrama servicii](docs/assets/architecture-services.png)
+![Diagrama servicii](/architecture-services.png)
 
 Frontendul este servit prin AWS Amplify. API-ul trece prin Amazon API Gateway si Lambda, cu date salvate in DynamoDB. Materialele sunt incarcate in S3, apoi procesate asincron prin SQS si un Processor Lambda care foloseste Gemini. Reminder-ele sunt declansate zilnic prin EventBridge si trimise prin SNS Email.
 
