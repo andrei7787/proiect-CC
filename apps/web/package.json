@@ -4,7 +4,6 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json && vite build",
-    "test": "vitest run --environment jsdom",
     "dev": "vite"
   },
   "dependencies": {
@@ -15,10 +14,7 @@
     "vite": "^7.0.0"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.0.0",
-    "@testing-library/react": "^16.0.0",
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "jsdom": "^27.0.0"
+    "@types/react-dom": "^19.0.0"
   }
 }

@@ -2,6 +2,7 @@ export interface AuthSession {
   idToken: string;
   accessToken: string;
   refreshToken?: string;
+  expiresAt: number;
 }
 
 const storageKey = "ai-study-planner.auth";
@@ -15,10 +16,19 @@ export function loadStoredSession(): AuthSession | null {
     if (typeof parsed.idToken !== "string" || parsed.idToken.length === 0) return null;
     if (typeof parsed.accessToken !== "string" || parsed.accessToken.length === 0) return null;
     if (parsed.refreshToken !== undefined && typeof parsed.refreshToken !== "string") return null;
+    if (typeof parsed.expiresAt !== "number") {
+      clearStoredSession();
+      return null;
+    }
+    if (parsed.expiresAt <= Date.now()) {
+      clearStoredSession();
+      return null;
+    }
     return {
       idToken: parsed.idToken,
       accessToken: parsed.accessToken,
-      refreshToken: parsed.refreshToken
+      refreshToken: parsed.refreshToken,
+      expiresAt: parsed.expiresAt
     };
   } catch {
     return null;
