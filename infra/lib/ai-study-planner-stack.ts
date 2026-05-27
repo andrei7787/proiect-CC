@@ -45,6 +45,7 @@ export class AiStudyPlannerStack extends Stack {
 		const userPool = new UserPool(this, "UserPool", {
 			selfSignUpEnabled: true,
 			signInAliases: { email: true },
+			autoVerify: { email: true },
 			removalPolicy: RemovalPolicy.DESTROY,
 		});
 		const userPoolClient = new UserPoolClient(this, "UserPoolClient", {

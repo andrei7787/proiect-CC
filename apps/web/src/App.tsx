@@ -50,6 +50,10 @@ export function App() {
 		password: string,
 	): Promise<string | undefined> {
 		const result = await registerWithCognito(email, password);
+		if (result.userConfirmed) {
+			await handleLogin(email, password);
+			return undefined;
+		}
 		return result.destination;
 	}
 

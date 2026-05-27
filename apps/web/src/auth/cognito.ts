@@ -18,7 +18,7 @@ function requiredEnv(name: string): string {
 export async function registerWithCognito(
 	email: string,
 	password: string,
-): Promise<{ userId: string; destination: string }> {
+): Promise<{ userId: string; destination: string; userConfirmed: boolean }> {
 	const client = new CognitoIdentityProviderClient({
 		region: requiredEnv("VITE_AWS_REGION"),
 	});
@@ -35,6 +35,7 @@ export async function registerWithCognito(
 	return {
 		userId: result.UserSub ?? "",
 		destination: result.CodeDeliveryDetails?.Destination ?? email,
+		userConfirmed: result.UserConfirmed ?? false,
 	};
 }
 
